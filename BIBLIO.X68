@@ -15,7 +15,15 @@ SAISCAR:
 *------------------------------------------------*
 
 *------------------------------------------------*
-* Arrête le programme    
+*Positionne le curseur/efface l'écran   
+POS_CURS:
+    MOVE #11, D0
+    TRAP #15
+    RTS
+*------------------------------------------------*
+
+*------------------------------------------------*
+*Arrête le programme
 FINPRG:
     MOVE #9, D0
     TRAP #15
@@ -263,6 +271,10 @@ END_LOOP_I_UPDATE:
     MOVE.L  SAVE_ADRESSE, A2
     MOVE.L  SAVE_ADRESSE2, A1
     RTS
+
+
+
+
 
 
 
