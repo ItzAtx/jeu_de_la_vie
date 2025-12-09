@@ -1,15 +1,22 @@
     ORG    $1000
 START:                  ; first instruction of program
     
-    *Dimensions de la fenêtre
+    *Dimensions de la fenÃªtre
     MOVE.L RESOL, D1
     JSR RESOLUTION
     
     *Couleur de fond
-    MOVE.L	#$A3CCFF, D1
+    MOVE.L	#$262945, D1
     JSR FILL_BACKGROUND
-    
-    *Paramètres de dimensions
+
+    *CrÃ©ation des boutons
+    MOVE.L #$8D6B96, D1         *Bouton START
+    JSR SET_FILL_COLOR
+    JSR SET_PEN_COLOR
+    MOVE.L #B_PLAY, A1
+    JSR DRAW_BUTTON
+
+    *ParamÃ¨tres de dimensions
     MOVE.W NB_LIGNES, D6  
     MOVE.W NB_COLONNES, D7
     MOVE.W SIZE_CELL, D5
@@ -48,30 +55,31 @@ START:                  ; first instruction of program
 
 *------- BOUCLE PRINCIPALE (Infini pour le moment) -------*
 BOUCLE_DEBUT:
+    CMP.B #1, RUN
+    BNE FIN_BOUCLE
     
-    
-    *Calcul de la nouvelle génération
+    *Calcul de la nouvelle gÃ©nÃ©ration
     MOVE.L PTAB1, A1
     MOVE.L PTAB2, A2
     JSR UPDATE
 
     
-    *Affichage de la grille mise à jour
+    *Affichage de la grille mise Ã  jour
     MOVE.L PTAB2, A1
     JSR DRAW_GRID
     
-    *Échange des pointeurs pour la prochaine génération
+    *Ã‰change des pointeurs pour la prochaine gÃ©nÃ©ration
     MOVE.L PTAB1, D0
     MOVE.L PTAB2, PTAB1
     MOVE.L D0, PTAB2
     
-    *Délai pour ralentir l'animation
+    *DÃ©lai pour ralentir l'animation
     MOVE.L #300000, D0
 DELAY_LOOP:
     SUBQ.L #1, D0
     BNE DELAY_LOOP
     
-    *Retour au début de la boucle
+    *Retour au dÃ©but de la boucle
     JMP BOUCLE_DEBUT
 
 *------- FIN BOUCLE -------*
@@ -101,7 +109,11 @@ SIZE_CELL: DC.W 10
 GAP_X: DC.W 150
 GAP_Y: DC.W 50
 
-CONTINUE: DC.B 1
+RUN: DC.B 1
+
+B_PLAY: DC.W 15, 15, 165, 65		*X1, Y1, X2, Y2
+        DC.W 51, 18         		*X, Y
+        DC.B 'START',0
 
 *----------------------VARIABLES BIBLIOTHEQUES----------------------
 
@@ -121,3 +133,4 @@ VAR_SUM: DC.B 0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
