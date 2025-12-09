@@ -49,8 +49,13 @@ DRAW_MODE:
     TRAP #15
     RTS
 
+DRAW_STRING:
+    MOVE #95, D0
+    TRAP #15
+    RTS
+
 *-----------------------------------------------------------------------*
-*Efface l'Ècran
+*Efface l'√©cran
  
 CLEAR_SCREEN:
     MOVE.W  #$FF00, D1
@@ -68,23 +73,23 @@ DRAW_CELL:
     JSR SET_PEN_COLOR
     JSR SET_FILL_COLOR
     
-    *Calcul des coordonÈes du coin supÈrieur gauche
+    *Calcul des coordon√©es du coin sup√©rieur gauche
     MOVE.L VAR_J, D1
     MOVE.L VAR_I, D2
     MULU D5, D1             *D1 = j * taille_cellule = X1
     MULU D5, D2             *D2 = i * taille_cellule= Y1
     
-    *Calcul des coordonÈes du coin infÈrieur droit
+    *Calcul des coordon√©es du coin inf√©rieur droit
     MOVE.L D1, D3
     MOVE.L D2, D4
     ADD.L D5, D3            *D3 = X1 + taille_cellule= X2
     ADD.L D5, D4            *D4 = Y1 + taille_cellule= Y2
     
-    * Appliquer les marges/dÈcalages pour centrer ou positionner la grille
-    ADD.W   GAP_X, D1            * X1 += dÈcalage horizontal
-    ADD.W   GAP_Y, D2            * Y1 += dÈcalage vertical
-    ADD.W   GAP_X, D3            * X2 += dÈcalage horizontal
-    ADD.W   GAP_Y, D4            * Y2 += dÈcalage vertical
+    * Appliquer les marges/d√©calages pour centrer ou positionner la grille
+    ADD.W   GAP_X, D1            * X1 += d√©calage horizontal
+    ADD.W   GAP_Y, D2            * Y1 += d√©calage vertical
+    ADD.W   GAP_X, D3            * X2 += d√©calage horizontal
+    ADD.W   GAP_Y, D4            * Y2 += d√©calage vertical
     
     JSR DRAW_FILL_RECT
     RTS
@@ -99,7 +104,7 @@ DRAW_GRID:
     MOVE.L A1, SAVE_ADRESSE
     MOVE.L #0, D1
     MOVE.L #0, VAR_I
-    ADD.L D6, A1                *On saute la premiËre ligne de bord
+    ADD.L D6, A1                *On saute la premi√®re ligne de bord
     ADD.L #1, A1                *On saute le bord gauche de la ligne
     SUB.L #2, D6                *On enleve les deux lignes de bord de la hauteur
     SUB.L #2, D7                *On enleve les deux 0 de bord de la largeur
@@ -112,7 +117,7 @@ LOOP_I_DRAW_GRID:
 LOOP_J_DRAW_GRID:
     CMP.L VAR_J, D6
     BEQ END_LOOP_J_DRAW_GRID   *Si j = D6 alors on sort de la boucle
-    MOVE.B (A1)+, D0           *D0 contient l'Ètat de la cellule actuelle
+    MOVE.B (A1)+, D0           *D0 contient l'√©tat de la cellule actuelle
     MOVE.L #$FFFFFF, D1        *D1 contient la couleur blanche
     CMP.B #0, D0               *Si cellule morte, blanc
     BEQ SUITE_DRAW_GRID
@@ -154,7 +159,24 @@ FILL_BACKGROUND:
 	
 *-----------------------------------------------------------------------*
 
+*-----------------------------------------------------------------------*
+*Cr√©e un bouton
+*Arguments : D1, D2, D3, D4 (X1, Y1, X2, Y2 : les dimensions du rectangle), D1 et D2 pour centrer le texte
 
+DRAW_BUTTON:
+    MOVE.L A1, SAVE_ADRESSE
+    MOVE.W (A1)+, D1             *On met X1 dans D1 puis on passe √† l'adresse suivante de A1
+    MOVE.W (A1)+, D2             *On met Y1 dans D2 puis on passe √† l'adresse suivante de A1
+    MOVE.W (A1)+, D3             *On met X2 dans D3 puis on passe √† l'adresse suivante de A1
+    MOVE.W (A1)+, D4             *On met Y2 dans D4 puis on passe √† l'adresse suivante de A1
+    JSR DRAW_FILL_RECT           *On dessine le rectangle
+    ADD.W (A1)+, D1              *Centrage horizontal (X) du texte
+    ADD.W (A1)+, D2              *Centrage horizontal (X) du texte
+    JSR DRAW_STRING              *Dessine le texte
+    MOVE.L SAVE_ADRESSE, A1
+    RTS
+    
+*-----------------------------------------------------------------------*
 
 
 
@@ -162,3 +184,4 @@ FILL_BACKGROUND:
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
