@@ -161,17 +161,17 @@ FILL_BACKGROUND:
 
 *-----------------------------------------------------------------------*
 *Crée un bouton
-*Arguments : D1, D2, D3, D4 (X1, Y1, X2, Y2 : les dimensions du rectangle), D1 et D2 pour centrer le texte
+*Arguments : D1, D2, D3, D4 (Y1, X1, Y2, X2 : les dimensions du rectangle), D1 et D2 pour centrer le texte
 
 DRAW_BUTTON:
     MOVE.L A1, SAVE_ADRESSE
-    MOVE.W (A1)+, D1             *On met X1 dans D1 puis on passe à l'adresse suivante de A1
-    MOVE.W (A1)+, D2             *On met Y1 dans D2 puis on passe à l'adresse suivante de A1
-    MOVE.W (A1)+, D3             *On met X2 dans D3 puis on passe à l'adresse suivante de A1
-    MOVE.W (A1)+, D4             *On met Y2 dans D4 puis on passe à l'adresse suivante de A1
+    MOVE.W (A1)+, D2             *On met Y1 dans D1 puis on passe à l'adresse suivante de A1
+    MOVE.W (A1)+, D1             *On met X1 dans D2 puis on passe à l'adresse suivante de A1
+    MOVE.W (A1)+, D4             *On met Y2 dans D3 puis on passe à l'adresse suivante de A1
+    MOVE.W (A1)+, D3             *On met X2 dans D4 puis on passe à l'adresse suivante de A1
     JSR DRAW_FILL_RECT           *On dessine le rectangle
+    ADD.W (A1)+, D2              *Centrage vertical (Y) du texte
     ADD.W (A1)+, D1              *Centrage horizontal (X) du texte
-    ADD.W (A1)+, D2              *Centrage horizontal (X) du texte
     JSR DRAW_STRING              *Dessine le texte
     MOVE.L SAVE_ADRESSE, A1
     RTS
@@ -184,4 +184,5 @@ DRAW_BUTTON:
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
