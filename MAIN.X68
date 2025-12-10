@@ -10,10 +10,16 @@ START:                  ; first instruction of program
     JSR FILL_BACKGROUND
 
     *Création des boutons
-    MOVE.L #$8D6B96, D1         *Bouton START
+    MOVE.L #$8D6B96, D1         *Couleurs des boutons
     JSR SET_FILL_COLOR
     JSR SET_PEN_COLOR
+
+    *Bouton START
     MOVE.L #B_PLAY, A1
+    JSR DRAW_BUTTON
+
+    *Bouton STOP
+    MOVE.L #B_STOP, A1
     JSR DRAW_BUTTON
 
     *Paramètres de dimensions
@@ -53,33 +59,62 @@ START:                  ; first instruction of program
     JSR CHARIOT
     JSR CHARIOT
 
-*------- BOUCLE PRINCIPALE (Infini pour le moment) -------*
+*------- BOUCLE PRINCIPALE -------*
 BOUCLE_DEBUT:
-    CMP.B #1, RUN
-    BNE FIN_BOUCLE
     
-    *Calcul de la nouvelle génération
+TEST_LEFT_CLICK:
+    JSR IF_LEFT_CLICK
+    CMP.B #1, D0
+    BNE IN_PUSH_STOP
+    
+LEFT_CLICK:
+    CMP.B #1, IN_PUSH
+    BEQ SUITE_BOUCLE
+    
+    *BOUTON START
+    MOVE.L #B_PLAY, A1
+    JSR ON_ELEMENT
+    CMP.B #1, D0
+    BEQ START_ACTION
+    
+    *BOUTON STOP
+    MOVE.L #B_STOP, A1
+    JSR ON_ELEMENT
+    CMP.B #1, D0
+    BEQ STOP_ACTION
+    
+    JMP IN_PUSH_START
+
+*Actions des boutons
+START_ACTION:
+    MOVE.B #1, RUN
+    JMP IN_PUSH_START
+    
+STOP_ACTION:
+    MOVE.B #0, RUN
+    JMP IN_PUSH_START
+    
+IN_PUSH_START:
+    MOVE.B #1, IN_PUSH
+    JMP SUITE_BOUCLE
+    
+IN_PUSH_STOP:
+    MOVE.B #0, IN_PUSH
+    JMP SUITE_BOUCLE
+    
+    
+SUITE_BOUCLE:
+    CMP.B #0, RUN
+    BEQ BOUCLE_DEBUT
+    
     MOVE.L PTAB1, A1
     MOVE.L PTAB2, A2
     JSR UPDATE
-
-    
-    *Affichage de la grille mise à jour
-    MOVE.L PTAB2, A1
     JSR DRAW_GRID
+    MOVE.L A1, PTAB1
+    MOVE.L A2, PTAB2
     
-    *Échange des pointeurs pour la prochaine génération
-    MOVE.L PTAB1, D0
-    MOVE.L PTAB2, PTAB1
-    MOVE.L D0, PTAB2
     
-    *Délai pour ralentir l'animation
-    MOVE.L #300000, D0
-DELAY_LOOP:
-    SUBQ.L #1, D0
-    BNE DELAY_LOOP
-    
-    *Retour au début de la boucle
     JMP BOUCLE_DEBUT
 
 *------- FIN BOUCLE -------*
@@ -111,9 +146,15 @@ GAP_Y: DC.W 50
 
 RUN: DC.B 1
 
+IN_PUSH: DC.B 0
+
 B_PLAY: DC.W 15, 15, 165, 65		*X1, Y1, X2, Y2
         DC.W 51, 18         		*X, Y
         DC.B 'START',0
+
+B_STOP: DC.W 15, 185, 65, 335		*Y1, X1, Y2, X2
+        DC.W 18, 56         		*X, Y
+        DC.B 'STOP',0
 
 *----------------------VARIABLES BIBLIOTHEQUES----------------------
 
@@ -133,4 +174,5 @@ VAR_SUM: DC.B 0
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
+
 
