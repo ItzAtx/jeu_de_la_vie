@@ -55,7 +55,7 @@ DRAW_STRING:
     RTS
 
 *-----------------------------------------------------------------------*
-*Efface l'Ã©cran
+*Efface l'Écran
  
 CLEAR_SCREEN:
     MOVE.W  #$FF00, D1
@@ -73,23 +73,23 @@ DRAW_CELL:
     JSR SET_PEN_COLOR
     JSR SET_FILL_COLOR
     
-    *Calcul des coordonÃ©es du coin supÃ©rieur gauche
+    *Calcul des coordonées du coin supérieur gauche
     MOVE.L VAR_J, D1
     MOVE.L VAR_I, D2
     MULU D5, D1             *D1 = j * taille_cellule = X1
     MULU D5, D2             *D2 = i * taille_cellule= Y1
     
-    *Calcul des coordonÃ©es du coin infÃ©rieur droit
+    *Calcul des coordonées du coin inférieur droit
     MOVE.L D1, D3
     MOVE.L D2, D4
     ADD.L D5, D3            *D3 = X1 + taille_cellule= X2
     ADD.L D5, D4            *D4 = Y1 + taille_cellule= Y2
     
-    * Appliquer les marges/dÃ©calages pour centrer ou positionner la grille
-    ADD.W   GAP_X, D1            * X1 += dÃ©calage horizontal
-    ADD.W   GAP_Y, D2            * Y1 += dÃ©calage vertical
-    ADD.W   GAP_X, D3            * X2 += dÃ©calage horizontal
-    ADD.W   GAP_Y, D4            * Y2 += dÃ©calage vertical
+    * Appliquer les marges/décalages pour centrer ou positionner la grille
+    ADD.W   GAP_X, D1            * X1 += décalage horizontal
+    ADD.W   GAP_Y, D2            * Y1 += décalage vertical
+    ADD.W   GAP_X, D3            * X2 += décalage horizontal
+    ADD.W   GAP_Y, D4            * Y2 += décalage vertical
     
     JSR DRAW_FILL_RECT
     RTS
@@ -182,7 +182,10 @@ DRAW_BUTTON:
 
 *~Font name~Courier New~
 *~Font size~10~
+
+
+
+*~Font name~Courier New~
+*~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
-
-

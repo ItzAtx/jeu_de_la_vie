@@ -95,7 +95,7 @@ BOUCLEBINAIRE:
 *Remplis la matrice de 0
 *Arguments : A1 (adresse du tableau), D6 et D7 (dimensions)    
 
-REMPLIR:
+VIDER:
     MOVE.L  A1, SAVE_ADRESSE       *sauvegarde de l'adresse au début
     MOVE.L  #0, VAR_I              *i = 0
     MOVE.L  #0, VAR_J              *j = 0
@@ -216,7 +216,7 @@ LOOP_K_UPDATE:
     MOVE.L #0, VAR_L
     
 LOOP_L_UPDATE:
-    CMP.L #3, VAR_L                 Boucle sur les 3 colonnes du voisinage 3x3
+    CMP.L #3, VAR_L                 *Boucle sur les 3 colonnes du voisinage 3x3
     BEQ END_LOOP_L_UPDATE
     MOVE.B (A1)+, D0                *D0 = valeur de la cellule (0 ou 1), A1++
     ADD.B D0, VAR_SUM               *On ajoute cette valeur au compteur
@@ -271,6 +271,8 @@ END_LOOP_I_UPDATE:
     MOVE.L  SAVE_ADRESSE, A2
     MOVE.L  SAVE_ADRESSE2, A1
     RTS
+
+
 
 
 
