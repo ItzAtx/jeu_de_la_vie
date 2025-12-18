@@ -187,7 +187,7 @@ DRAW_GENERATION:
 
     MOVE.W #15,  D1
     MOVE.W #80,  D2 
-    MOVE.W #300, D3
+    MOVE.W #190, D3
     MOVE.W #120, D4
     JSR DRAW_FILL_RECT          *Dessine le fond
 
@@ -211,8 +211,41 @@ DRAW_GENERATION:
     RTS
 *-----------------------------------------------------------------------*
 
+*-----------------------------------------------------------------------*
+*Dessine le nombre de cellules vivantes
 
+DRAW_POP:
+    MOVE.L #$262945, D1         *Couleur du fond
+    JSR SET_FILL_COLOR
+    JSR SET_PEN_COLOR
+
+    MOVE.W #15,  D1
+    MOVE.W #120,  D2 
+    MOVE.W #190, D3
+    MOVE.W #160, D4
+    JSR DRAW_FILL_RECT          *Dessine le fond
+
+    MOVE.L #$FFFFFF, D1
+    JSR SET_PEN_COLOR           *Couleur de l'écriture
+
+    MOVE.W #30, D1
+    MOVE.W #145, D2
+    LEA STR_POP, A1             *A1 pointe sur le premier caractère de POPULATION
+    JSR DRAW_STRING             *Dessine le nombre
+
+    MOVE.W POPULATION, D0       *On met la generation actuelle dans D0
+    AND.L  #$0000FFFF, D0       *On nettoie D0
+    LEA BUF_POP, A1             *On fait pointer A1 sur le buffer qui contiendra le string
+    JSR NB_TO_STRING
+
+    MOVE.W #160, D1
+    MOVE.W #145, D2
+    JSR DRAW_STRING             *On dessine le nombre
+
+    RTS
     
+
+
 
 
 

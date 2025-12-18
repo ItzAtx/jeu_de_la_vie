@@ -301,6 +301,47 @@ LOOP_NB_TO_STRING:
     RTS
 
 *------------------------------------------------*
+COUNT_POP:
+    MOVE.L A1, SAVE_ADRESSE
+    MOVE.L D6, SAVE_D6
+    MOVE.L D7, SAVE_D7
+
+    CLR.L  D0              * compteur pop = 0
+    CLR.L  VAR_I           * i = 0
+
+    ADD.L  D6, A1          * saute la ligne du bord haut
+    ADD.L  #1, A1          * saute le bord gauche
+    SUB.L  #2, D6          * largeur intérieure
+    SUB.L  #2, D7          * hauteur intérieure
+
+LOOP_I_POP:
+    CMP.L  VAR_I, D7
+    BEQ    END_POP
+    CLR.L  VAR_J           * j = 0
+
+LOOP_J_POP:
+    CMP.L  VAR_J, D6
+    BEQ    END_ROW_POP
+
+    CLR.L  D1
+    MOVE.B (A1)+, D1
+    AND.L  #1, D1
+    ADD.L  D1, D0
+
+    ADD.L  #1, VAR_J
+    JMP    LOOP_J_POP
+
+END_ROW_POP:
+    ADD.L  #1, VAR_I
+    ADD.L  #2, A1          * saute bord droit + bord gauche ligne suivante
+    JMP    LOOP_I_POP
+
+END_POP:
+    MOVE.L SAVE_ADRESSE, A1
+    MOVE.L SAVE_D6, D6
+    MOVE.L SAVE_D7, D7
+    RTS
+*------------------------------------------------*
 
 
 

@@ -47,6 +47,10 @@ START:                  ; first instruction of program
     
 
     JSR DRAW_GENERATION
+    MOVE.L PTAB1, A1
+    JSR COUNT_POP
+    MOVE.W D0, POPULATION
+    JSR DRAW_POP
 *------- BOUCLE PRINCIPALE -------*
 BOUCLE_START:    
     
@@ -115,6 +119,8 @@ CLEAR_ACTION:
     JSR DRAW_GRID
     MOVE.W #0, GENERATION
     JSR DRAW_GENERATION
+    MOVE.W #0, POPULATION
+    JSR DRAW_POP
     JMP IN_PUSH_START
     
 LEFT_CLICK_IN_GRID:
@@ -163,6 +169,10 @@ SUITE_BOUCLE:
     BEQ BOUCLE_START
     
     JSR DRAW_GENERATION
+    MOVE.L PTAB1, A1
+    JSR COUNT_POP
+    MOVE.W D0, POPULATION
+    JSR DRAW_POP
     ADD.W #1, GENERATION
     MOVE.L PTAB1, A1
     MOVE.L PTAB2, A2
@@ -224,11 +234,11 @@ B_CLEAR:
 
 GENERATION: DC.W 0
 STR_GEN: DC.B 'GENERATION : ',0
-BUF_NUM: DS.B 8
+BUF_NUM: DS.B 12
 
 POPULATION: DC.W 0
 STR_POP: DC.B 'POPULATION : ',0
-BUF_POP: DS.B 8
+BUF_POP: DS.B 12
 *----------------------VARIABLES BIBLIOTHEQUES----------------------
 
 VAR_I: DC.L 0
@@ -238,6 +248,8 @@ VAR_L: DC.L 0
 
 SAVE_ADRESSE: DC.L 0
 SAVE_ADRESSE2: DC.L 0
+SAVE_D6: DC.L 0
+SAVE_D7: DC.L 0
 
 VAR_TMP: DC.B 0
 VAR_SUM: DC.B 0
@@ -245,6 +257,9 @@ VAR_SUM: DC.B 0
     END    START        ; last line of source
 *~Font name~Courier New~
 *~Font size~10~
+
+
+
 
 
 
