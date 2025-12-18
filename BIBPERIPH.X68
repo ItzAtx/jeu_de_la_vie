@@ -32,7 +32,7 @@ IF_LEFT_CLICK:
 ON_ELEMENT:
     MOVE.L (A1)+, D2        *D2 contient Y1 et X1 de l'élément
     MOVE.L (A1), D3         *D3 contient Y2 et X2 de l'élément
-    SUB.L #1, A1            *On remet A1 à sa position initiale
+    SUB.L #4, A1            *On remet A1 à sa position initiale
     MOVE.L #0, D0           *Par défaut, la souris n'est pas dans l'élément
     
     CMP.W D1, D2            *Compare X1 avec le X de la souris
@@ -69,7 +69,9 @@ END_ON_ELEMENT:
 
 
 *~Font name~Courier New~
+
+
+*~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~4~
-

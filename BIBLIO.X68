@@ -272,20 +272,35 @@ END_LOOP_I_UPDATE:
     MOVE.L  SAVE_ADRESSE2, A1
     RTS
 
+*------------------------------------------------*
+*Transforme un nombre en chaîne de caractères
+NB_TO_STRING:
+    ADD.L  #7, A1               *On décale A1 de 7 pour qu'il pointe sur le dernier octet du buffer
+    MOVE.L A1, A2               *On le copie dans A2
+    MOVE.B #0, (A2)             *On met le caractère de fin de chaîne au dernier octet
+    
+    CMP.L  #0, D0               *Si D0 = 0 alors...
+    BNE    LOOP_NB_TO_STRING
+    MOVE.B #'0', -(A2)          *...On déplace l'adresse d'A2 à gauche et on lui met le caractère 0
+    MOVE.L A2, A1               *A1 prend A2 et c'est fini si le nb est = à 0
+    RTS
 
+LOOP_NB_TO_STRING:
+    DIVU   #10, D0              *Sinon, on divise le nb par 10 (16 bits forts = reste, 16 bits faibles = quotient)
+    MOVE.W D0, D3               *On copie le quotient dans D3 (donc ce qu'on aura à rediviser)
+    SWAP   D0                   *On inverse les 16 bits
+    ADD.B  #'0', D0             *On transforme le nb en ASCII en lui rajoutant la valeur du caractere de fin de chaine (48)
+    MOVE.B D0, -(A2)            *On recule A2 d'un octet et on écrit le caractère
+    MOVE.W D3, D0               *On remet D0 = quotient
+    AND.L  #$0000FFFF, D0       *On nettoie les 16 bits forts
 
+    CMP.W  #0, D0               *Tant que le quotient n'est pas 0
+    BNE    LOOP_NB_TO_STRING    *On continue
+    
+    MOVE.L A2, A1               *On met le mot dans A1
+    RTS
 
-
-
-
-
-
-
-
-
-
-
-
+*------------------------------------------------*
 
 
 

@@ -45,11 +45,11 @@ START:                  ; first instruction of program
     MOVE.L PTAB1, A1
     JSR DRAW_GRID
     
-    JSR CHARIOT
-    JSR CHARIOT
 
+    JSR DRAW_GENERATION
 *------- BOUCLE PRINCIPALE -------*
-BOUCLE_START:
+BOUCLE_START:    
+    
     
 TEST_LEFT_CLICK:
     JSR IF_LEFT_CLICK
@@ -113,6 +113,8 @@ CLEAR_ACTION:
     MOVE.L PTAB2, A2
     JSR VIDER
     JSR DRAW_GRID
+    MOVE.W #0, GENERATION
+    JSR DRAW_GENERATION
     JMP IN_PUSH_START
     
 LEFT_CLICK_IN_GRID:
@@ -160,6 +162,8 @@ SUITE_BOUCLE:
     CMP.B #0, RUN
     BEQ BOUCLE_START
     
+    JSR DRAW_GENERATION
+    ADD.W #1, GENERATION
     MOVE.L PTAB1, A1
     MOVE.L PTAB2, A2
     JSR UPDATE
@@ -218,6 +222,13 @@ B_CLEAR:
         DC.W 18, 54         		*X, Y
         DC.B 'CLEAR',0
 
+GENERATION: DC.W 0
+STR_GEN: DC.B 'GENERATION : ',0
+BUF_NUM: DS.B 8
+
+POPULATION: DC.W 0
+STR_POP: DC.B 'POPULATION : ',0
+BUF_POP: DS.B 8
 *----------------------VARIABLES BIBLIOTHEQUES----------------------
 
 VAR_I: DC.L 0
@@ -234,6 +245,16 @@ VAR_SUM: DC.B 0
     END    START        ; last line of source
 *~Font name~Courier New~
 *~Font size~10~
+
+
+
+
+
+
+
+
+
+
 
 
 
