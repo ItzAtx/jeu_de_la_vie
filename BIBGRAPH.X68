@@ -1,58 +1,38 @@
+*-----------------------------------------------------------------------*
+*Initialise la couleur du crayon
+
 SET_PEN_COLOR:
     MOVE #80, D0
     TRAP #15
     RTS
-    
+*-----------------------------------------------------------------------*
+
+*-----------------------------------------------------------------------*    
+*Initialise la couleur de remplissage
+
 SET_FILL_COLOR:
     MOVE #81, D0
     TRAP #15
     RTS
-    
-DRAW_PIX:
-    MOVE #82, D0
-    TRAP #15
-    RTS
-    
-GET_PIX_COLOR:
-    MOVE #83, D0
-    TRAP #15
-    RTS
-    
-DRAW_LINE:
-    MOVE #84, D0
-    TRAP #15
-    RTS
-    
-DRAW_TO:
-    MOVE #85, D0
-    TRAP #15
-    RTS
-    
-MOVE_TO:
-    MOVE #86, D0
-    TRAP #15
-    RTS
-    
+*-----------------------------------------------------------------------*
+
+*-----------------------------------------------------------------------*  
+*Dessine un rectangle pleins
+ 
 DRAW_FILL_RECT:
     MOVE #87, D0
     TRAP #15
     RTS
-    
-    
-WIDTH_PEN:
-    MOVE #93, D0
-    TRAP #15
-    RTS
-    
-DRAW_MODE:
-    MOVE #92, D0
-    TRAP #15
-    RTS
+*-----------------------------------------------------------------------*
+
+*-----------------------------------------------------------------------*
+*Dessine une chaîne de caractères
 
 DRAW_STRING:
     MOVE #95, D0
     TRAP #15
     RTS
+*-----------------------------------------------------------------------*
 
 *-----------------------------------------------------------------------*
 *Efface l'Écran
@@ -67,7 +47,6 @@ CLEAR_SCREEN:
 *-----------------------------------------------------------------------*
 *Dessine une cellule
 *Argument : D1 (couleur et X1), D2 (Y1), D3 et D4 (X2 et Y2), D5 (taille d'une cellule)
-*On utilise aussi les variables GAP_X et GAP_Y
 
 DRAW_CELL:
     JSR SET_PEN_COLOR
@@ -186,16 +165,16 @@ DRAW_GENERATION:
     JSR SET_PEN_COLOR
 
     MOVE.W #15,  D1
-    MOVE.W #80,  D2 
-    MOVE.W #190, D3
-    MOVE.W #120, D4
+    MOVE.W #125,  D2 
+    MOVE.W #210, D3
+    MOVE.W #165, D4
     JSR DRAW_FILL_RECT          *Dessine le fond
 
     MOVE.L #$FFFFFF, D1
     JSR SET_PEN_COLOR           *Couleur de l'écriture
 
     MOVE.W #30, D1
-    MOVE.W #100, D2
+    MOVE.W #130, D2
     LEA STR_GEN, A1             *A1 pointe sur le premier caractère de GENERATION
     JSR DRAW_STRING             *Dessine le nombre
 
@@ -205,7 +184,7 @@ DRAW_GENERATION:
     JSR NB_TO_STRING
 
     MOVE.W #160, D1
-    MOVE.W #100, D2
+    MOVE.W #130, D2
     JSR DRAW_STRING             *On dessine le nombre
 
     RTS
@@ -220,16 +199,16 @@ DRAW_POP:
     JSR SET_PEN_COLOR
 
     MOVE.W #15,  D1
-    MOVE.W #120,  D2 
-    MOVE.W #190, D3
-    MOVE.W #160, D4
+    MOVE.W #165,  D2 
+    MOVE.W #210, D3
+    MOVE.W #205, D4
     JSR DRAW_FILL_RECT          *Dessine le fond
 
     MOVE.L #$FFFFFF, D1
     JSR SET_PEN_COLOR           *Couleur de l'écriture
 
     MOVE.W #30, D1
-    MOVE.W #145, D2
+    MOVE.W #170, D2
     LEA STR_POP, A1             *A1 pointe sur le premier caractère de POPULATION
     JSR DRAW_STRING             *Dessine le nombre
 
@@ -239,11 +218,13 @@ DRAW_POP:
     JSR NB_TO_STRING
 
     MOVE.W #160, D1
-    MOVE.W #145, D2
+    MOVE.W #170, D2
     JSR DRAW_STRING             *On dessine le nombre
 
     RTS
     
+
+
 
 
 

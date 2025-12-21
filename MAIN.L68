@@ -1,0 +1,932 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 21/12/2025 15:41:41
+
+00001000                             1      ORG    $1000
+00001000                             2  START:                  ; first instruction of program
+00001000                             3      
+00001000                             4      *Dimensions de la fenêtre
+00001000  2239 0000280E              5      MOVE.L RESOL, D1
+00001006  4EB9 000015B0              6      JSR RESOLUTION
+0000100C                             7      
+0000100C                             8      *Couleur de fond
+0000100C  223C 00262945              9      MOVE.L  #$262945, D1
+00001012  4EB9 000016D4             10      JSR FILL_BACKGROUND
+00001018                            11  
+00001018                            12      *Création des boutons
+00001018  223C 008D6B96             13      MOVE.L #$8D6B96, D1         *Couleurs des boutons
+0000101E  4EB9 00001604             14      JSR SET_FILL_COLOR
+00001024  4EB9 000015FC             15      JSR SET_PEN_COLOR
+0000102A                            16  
+0000102A                            17      *Bouton START
+0000102A  227C 0000281E             18      MOVE.L #B_PLAY, A1
+00001030  4EB9 000016F6             19      JSR DRAW_BUTTON
+00001036                            20  
+00001036                            21      *Bouton STOP
+00001036  227C 00002830             22      MOVE.L #B_STOP, A1
+0000103C  4EB9 000016F6             23      JSR DRAW_BUTTON
+00001042                            24      
+00001042                            25      *Bouton CLEAR
+00001042  227C 00002842             26      MOVE.L #B_CLEAR, A1
+00001048  4EB9 000016F6             27      JSR DRAW_BUTTON
+0000104E                            28  
+0000104E                            29      *Paramètres de dimensions
+0000104E  3C39 0000280A             30      MOVE.W NB_LIGNES, D6  
+00001054  3E39 0000280C             31      MOVE.W NB_COLONNES, D7
+0000105A  3A39 00002812             32      MOVE.W SIZE_CELL, D5
+00001060                            33      
+00001060                            34      *Remplissage des deux tableaux
+00001060  227C 00002000             35      MOVE.L #TABLEAU1, A1
+00001066  4EB9 000012D0             36      JSR VIDER
+0000106C  227C 00002400             37      MOVE.L #TABLEAU2, A1
+00001072  4EB9 000012D0             38      JSR VIDER
+00001078                            39      
+00001078                            40      *Initialisation des pointeurs
+00001078  23FC 00002000 00002800    41      MOVE.L #TABLEAU1, PTAB1
+00001082  23FC 00002400 00002804    42      MOVE.L #TABLEAU2, PTAB2
+0000108C                            43      
+0000108C                            44      *Affichage initial
+0000108C  2279 00002800             45      MOVE.L PTAB1, A1
+00001092  4EB9 00001664             46      JSR DRAW_GRID
+00001098                            47      
+00001098                            48      *Affichage des labels à 0
+00001098  4EB9 00001718             49      JSR DRAW_GENERATION
+0000109E  2279 00002800             50      MOVE.L PTAB1, A1
+000010A4  4EB9 0000153E             51      JSR COUNT_POP
+000010AA  33C0 00002870             52      MOVE.W D0, POPULATION
+000010B0  4EB9 0000177A             53      JSR DRAW_POP
+000010B6                            54  *------- BOUCLE PRINCIPALE -------*
+000010B6                            55  BOUCLE_START:    
+000010B6                            56      
+000010B6                            57  *Test si l'utilisateur à cliqué    
+000010B6                            58  TEST_LEFT_CLICK:
+000010B6  4EB9 000015C0             59      JSR IF_LEFT_CLICK
+000010BC  B03C 0001                 60      CMP.B #1, D0
+000010C0  6600 0172                 61      BNE IN_PUSH_STOP
+000010C4                            62  
+000010C4                            63  *Tests des coordonnées sur lesquelles l'utilisateur a pu cliquer
+000010C4                            64  LEFT_CLICK:
+000010C4  0C39 0001 0000281D        65      CMP.B #1, IN_PUSH *Si le clic est maintenu, on test les coordonées de la grille directement
+000010CC  6700 0044                 66      BEQ  IF_LEFT_CLICK_IN_GRID
+000010D0                            67      
+000010D0                            68      *BOUTON START
+000010D0  227C 0000281E             69      MOVE.L #B_PLAY, A1
+000010D6  4EB9 000015CC             70      JSR ON_ELEMENT
+000010DC  B03C 0001                 71      CMP.B #1, D0
+000010E0  6700 006E                 72      BEQ START_ACTION
+000010E4                            73      
+000010E4                            74      *BOUTON STOP
+000010E4  227C 00002830             75      MOVE.L #B_STOP, A1
+000010EA  4EB9 000015CC             76      JSR ON_ELEMENT
+000010F0  B03C 0001                 77      CMP.B #1, D0
+000010F4  6700 0068                 78      BEQ STOP_ACTION
+000010F8                            79      
+000010F8                            80      *BOUTON CLEAR
+000010F8  227C 00002842             81      MOVE.L #B_CLEAR, A1
+000010FE  4EB9 000015CC             82      JSR ON_ELEMENT
+00001104  B03C 0001                 83      CMP.B #1, D0
+00001108  6700 0062                 84      BEQ CLEAR_ACTION
+0000110C                            85      
+0000110C  4EF9 00001226             86      JMP IN_PUSH_START
+00001112                            87  
+00001112                            88  *Si l'utilisateur a cliqué sur la grille    
+00001112                            89  IF_LEFT_CLICK_IN_GRID:
+00001112  2401                      90      MOVE.L D1, D2 *D1 contiens les coordonées de la souris (Y 16 bits | X 16 bits)
+00001114                            91      
+00001114  B479 00002814             92      CMP.W GAP_X, D2 *Compare X avec la marge gauche
+0000111A  6500 010A                 93      BCS IN_PUSH_START *Si X < marge gauche, on sort
+0000111E  9479 00002814             94      SUB.W GAP_X, D2 *D2 = X - marge gauche (distance entre X et la marge gauche)
+00001124  B479 00002818             95      CMP.W WIDTH_CALC, D2 *Compare X-marge gauche <= WIDTH_CALC
+0000112A  6400 00FA                 96      BCC IN_PUSH_START
+0000112E                            97      
+0000112E  4842                      98      SWAP D2 *Swap des coordonées de la souris -> Y dans les 16 bits faibles
+00001130                            99      
+00001130  B479 00002816            100      CMP.W GAP_Y, D2
+00001136  6500 00EE                101      BCS IN_PUSH_START
+0000113A  9479 00002816            102      SUB.W GAP_Y, D2
+00001140  B479 0000281A            103      CMP.W HEIGHT_CALC, D2
+00001146  6400 00DE                104      BCC IN_PUSH_START
+0000114A                           105      
+0000114A  4EF9 000011B2            106      JMP LEFT_CLICK_IN_GRID
+00001150                           107  
+00001150                           108  *Actions des boutons
+00001150                           109  START_ACTION:
+00001150  13FC 0001 0000281C       110      MOVE.B #1, RUN
+00001158  4EF9 00001226            111      JMP IN_PUSH_START
+0000115E                           112      
+0000115E                           113  STOP_ACTION:
+0000115E  13FC 0000 0000281C       114      MOVE.B #0, RUN
+00001166  4EF9 00001226            115      JMP IN_PUSH_START
+0000116C                           116      
+0000116C                           117  CLEAR_ACTION:
+0000116C  0C39 0001 0000281C       118      CMP.B #1, RUN
+00001174  6700 00B0                119      BEQ IN_PUSH_START
+00001178  2279 00002800            120      MOVE.L PTAB1, A1
+0000117E  2479 00002804            121      MOVE.L PTAB2, A2
+00001184  4EB9 000012D0            122      JSR VIDER
+0000118A  4EB9 00001664            123      JSR DRAW_GRID
+00001190  33FC 0000 00002854       124      MOVE.W #0, GENERATION
+00001198  4EB9 00001718            125      JSR DRAW_GENERATION
+0000119E  33FC 0000 00002870       126      MOVE.W #0, POPULATION
+000011A6  4EB9 0000177A            127      JSR DRAW_POP
+000011AC  4EF9 00001226            128      JMP IN_PUSH_START
+000011B2                           129      
+000011B2                           130  LEFT_CLICK_IN_GRID:
+000011B2  0C39 0001 0000281C       131      CMP.B #1, RUN *Si le jeu est en route, on ne fait rien
+000011BA  6700 006A                132      BEQ IN_PUSH_START
+000011BE  143C 0001                133      MOVE.B #1, D2
+000011C2  4EF9 000011C8            134      JMP CLICK_IN_GRID
+000011C8                           135      
+000011C8                           136  CLICK_IN_GRID:
+000011C8  3001                     137      MOVE.W D1, D0 *Copie les 16 bits faibles (X) dans D0
+000011CA  323C 0000                138      MOVE.W #0, D1 
+000011CE  4841                     139      SWAP D1 *Swap pour avoir Y dans les 16 bits faibles de D1
+000011D0                           140      
+000011D0  9079 00002814            141      SUB.W GAP_X, D0 *Xr = X - 300
+000011D6  9279 00002816            142      SUB.W GAP_Y, D1 *Yr = Y - 125
+000011DC                           143      
+000011DC  D085                     144      ADD.L D5, D0 *D5 contiens la taille d'une cellule (10)
+000011DE  D285                     145      ADD.L D5, D1
+000011E0  80C5                     146      DIVU D5, D0 *Colonne = (Xr + 10) / 10
+000011E2  82C5                     147      DIVU D5, D1 *Ligne = (Yr + 10) / 10
+000011E4                           148      
+000011E4  C2F9 0000280A            149      MULU NB_LIGNES, D1 *D1 = Ligne * 32
+000011EA                           150      
+000011EA                           151      *Les adresses pointent sur les tableaux
+000011EA  2279 00002800            152      MOVE.L PTAB1, A1
+000011F0  2479 00002804            153      MOVE.L PTAB2, A2
+000011F6                           154      
+000011F6                           155      *Nettoyage des 16 bits forts
+000011F6  C0BC 0000FFFF            156      AND.L #$0000FFFF, D0
+000011FC  C2BC 0000FFFF            157      AND.L #$0000FFFF, D1
+00001202                           158      
+00001202  D3C0                     159      ADD.L D0, A1 *A1 += colonne
+00001204  D3C1                     160      ADD.L D1, A1 *A2 += (ligne * 32)
+00001206                           161      
+00001206  B411                     162      CMP.B (A1), D2 *Compare l'état actuelle de la cellule
+00001208  6700 001C                163      BEQ IN_PUSH_START *Si cellule déjà vivante, on passe
+0000120C  1282                     164      MOVE.B D2, (A1) *Sinon on la met vivante
+0000120E                           165      
+0000120E                           166      *On remet les pointeurs au début
+0000120E  2279 00002800            167      MOVE.L PTAB1, A1
+00001214  2479 00002804            168      MOVE.L PTAB2, A2
+0000121A                           169      
+0000121A  4EB9 00001664            170      JSR DRAW_GRID
+00001220  4EF9 00001226            171      JMP IN_PUSH_START
+00001226                           172  
+00001226                           173      
+00001226                           174  IN_PUSH_START:
+00001226  13FC 0001 0000281D       175      MOVE.B #1, IN_PUSH
+0000122E  4EF9 00001242            176      JMP SUITE_BOUCLE
+00001234                           177      
+00001234                           178  IN_PUSH_STOP:
+00001234  13FC 0000 0000281D       179      MOVE.B #0, IN_PUSH
+0000123C  4EF9 00001242            180      JMP SUITE_BOUCLE
+00001242                           181      
+00001242                           182      
+00001242                           183  SUITE_BOUCLE:
+00001242  0C39 0000 0000281C       184      CMP.B #0, RUN
+0000124A  6700 FE6A                185      BEQ BOUCLE_START
+0000124E                           186      
+0000124E  4EB9 00001718            187      JSR DRAW_GENERATION
+00001254  2279 00002800            188      MOVE.L PTAB1, A1
+0000125A  4EB9 0000153E            189      JSR COUNT_POP
+00001260  33C0 00002870            190      MOVE.W D0, POPULATION
+00001266  4EB9 0000177A            191      JSR DRAW_POP
+0000126C  5279 00002854            192      ADD.W #1, GENERATION
+00001272  2279 00002800            193      MOVE.L PTAB1, A1
+00001278  2479 00002804            194      MOVE.L PTAB2, A2
+0000127E  4EB9 000013D6            195      JSR UPDATE
+00001284  4EB9 00001664            196      JSR DRAW_GRID
+0000128A  23C9 00002800            197      MOVE.L A1, PTAB1
+00001290  23CA 00002804            198      MOVE.L A2, PTAB2
+00001296                           199      
+00001296                           200      
+00001296  4EF8 10B6                201      JMP BOUCLE_START
+0000129A                           202  
+0000129A                           203  *------- FIN BOUCLE -------*
+0000129A                           204  
+0000129A                           205  FIN_BOUCLE:
+0000129A  4EF9 000012B8            206      JMP FINPRG
+000012A0                           207      
+000012A0                           208      
+000012A0                           209      
+000012A0                           210      INCLUDE 'BIBLIO.X68'
+000012A0                           211  
+000012A0                           212  AFFCAR:
+000012A0  303C 0006                213      MOVE #6, D0
+000012A4  4E4F                     214      TRAP #15
+000012A6  4E75                     215      RTS
+000012A8                           216  
+000012A8                           217  
+000012A8                           218  SAISCAR:
+000012A8  303C 0005                219      MOVE #5, D0
+000012AC  4E4F                     220      TRAP #15
+000012AE  4E75                     221      RTS
+000012B0                           222  
+000012B0                           223  
+000012B0                           224  POS_CURS:
+000012B0  303C 000B                225      MOVE #11, D0
+000012B4  4E4F                     226      TRAP #15
+000012B6  4E75                     227      RTS
+000012B8                           228  
+000012B8                           229  
+000012B8                           230  FINPRG:
+000012B8  303C 0009                231      MOVE #9, D0
+000012BC  4E4F                     232      TRAP #15
+000012BE                           233  
+000012BE                           234  
+000012BE                           235  CHARIOT:
+000012BE  123C 000A                236      MOVE.B  #$0A, D1                *\r
+000012C2  4EB8 12A0                237      JSR AFFCAR
+000012C6  123C 000D                238      MOVE.B  #$0D, D1                *\n
+000012CA  4EB8 12A0                239      JSR AFFCAR
+000012CE  4E75                     240      RTS 
+000012D0                           241  
+000012D0                           242  
+000012D0                           243  VIDER:
+000012D0  23C9 0000289C            244      MOVE.L  A1, SAVE_ADRESSE       *sauvegarde de l'adresse au début
+000012D6  23FC 00000000 0000288C   245      MOVE.L  #0, VAR_I              *i = 0
+000012E0  23FC 00000000 00002890   246      MOVE.L  #0, VAR_J              *j = 0
+000012EA                           247   
+000012EA                           248  LOOP_I:                            *DEBUT LOOP_I                                
+000012EA  BCB9 0000288C            249      CMP.L   VAR_I, D6              *si i = height         
+000012F0  6700 002E                250      BEQ     END_LOOP_I             *on sort de LOOP_I
+000012F4  23FC 00000000 00002890   251      MOVE.L  #0, VAR_J              *j = 0
+000012FE                           252      
+000012FE                           253  LOOP_J:                            *DEBUT LOOP_J
+000012FE  BEB9 00002890            254      CMP.L   VAR_J, D7              *si j == width
+00001304  6700 0010                255      BEQ     END_LOOP_J             *on sort de LOOP_J
+00001308  12FC 0000                256      MOVE.B  #0, (A1)+              *on met 0 à l'adresse puis on augmente l'adresse de 1
+0000130C  52B9 00002890            257      ADD.L   #1, VAR_J              *j++
+00001312  4EF8 12FE                258      JMP     LOOP_J                 *retour à LOOP_J
+00001316                           259      
+00001316                           260  END_LOOP_J:                        *FIN LOOP_J       
+00001316  52B9 0000288C            261      ADD.L   #1, VAR_I              *i++
+0000131C  4EF8 12EA                262      JMP     LOOP_I                 *retour à LOOP_I
+00001320                           263  
+00001320                           264  END_LOOP_I:                        *FIN LOOP_I 
+00001320                           265      
+00001320  2279 0000289C            266      MOVE.L  SAVE_ADRESSE, A1       *A1 reviens à son adresse initiale
+00001326  4E75                     267      RTS
+00001328                           268  
+00001328                           269  PRINT_GRID:
+00001328  23C9 0000289C            270      MOVE.L  A1, SAVE_ADRESSE        *sauvegarde de l'adresse au début
+0000132E  7200                     271      MOVE.L  #$0, D1                 *D1 = la couleur (0, 0, 0)
+00001330  23FC 00000000 0000288C   272      MOVE.L  #0, VAR_I               *i = 0
+0000133A  23FC 00000000 00002890   273      MOVE.L  #0, VAR_J               *j = 0
+00001344                           274      
+00001344                           275  LOOP_I_PRINT:                       *DEBUT LOOP_I
+00001344  BEB9 0000288C            276      CMP.L   VAR_I, D7               *si i = height
+0000134A  6700 004A                277      BEQ     END_LOOP_I_PRINT        *on sort de LOOP_I
+0000134E  23FC 00000000 00002890   278      MOVE.L  #0, VAR_J               *j = 0
+00001358                           279      
+00001358                           280  LOOP_J_PRINT:                       *DEBUT LOOP_J
+00001358  BCB9 00002890            281      CMP.L   VAR_J, D6               *si j = width
+0000135E  6700 0028                282      BEQ     END_LOOP_J_PRINT        *sortir de LOOP_J
+00001362                           283      
+00001362  13D1 000028AC            284      MOVE.B  (A1), VAR_TMP          *VAR_TMP = la valeur dans l'adresse puis on incrémente l'adresse
+00001368  5289                     285      ADD.L   #1, A1
+0000136A  7230                     286      MOVE.L  #48, D1                 *D1 = 0
+0000136C  0C39 0000 000028AC       287      CMP.B   #0, VAR_TMP             *si VAR_TMP = 0
+00001374  6700 0004                288      BEQ     SUITE_PRINT
+00001378                           289  IF_EQUAL_PRINT:                
+00001378  7231                     290      MOVE.L  #49, D1                 *sinon, D1 = 1
+0000137A                           291      
+0000137A                           292  SUITE_PRINT:
+0000137A  4EB8 12A0                293      JSR     AFFCAR                  *afficher D1 (0 ou 1 selon la comparaison d'avant)
+0000137E  52B9 00002890            294      ADD.L   #1, VAR_J               *j++
+00001384  4EF8 1358                295      JMP     LOOP_J_PRINT
+00001388                           296      
+00001388                           297  END_LOOP_J_PRINT:
+00001388  4EB8 12BE                298      JSR     CHARIOT                 *retour à la ligne
+0000138C  52B9 0000288C            299      ADD.L   #1, VAR_I               *i++
+00001392  4EF8 1344                300      JMP     LOOP_I_PRINT
+00001396                           301  
+00001396                           302  END_LOOP_I_PRINT:
+00001396  2279 0000289C            303      MOVE.L  SAVE_ADRESSE, A1       *A1 reviens à son adresse initiale
+0000139C  4E75                     304      RTS
+0000139E                           305  
+0000139E                           306  
+0000139E                           307  COPY_GRID:
+0000139E  23FC 00000000 0000288C   308      MOVE.L #0, VAR_I                *i = 0
+000013A8  23C9 0000289C            309      MOVE.L A1, SAVE_ADRESSE         *sauvegarde des adresses du début
+000013AE  23CA 000028A0            310      MOVE.L A2, SAVE_ADRESSE2
+000013B4                           311  FOR_I_CPY:
+000013B4  1491                     312      MOVE.B (A1),(A2)               *contenu de A2 = contenu de A1
+000013B6  5289                     313      ADD.L #1, A1                    *on incrémente les adresses
+000013B8  528A                     314      ADD.L #1, A2
+000013BA  52B9 0000288C            315      ADD.L #1, VAR_I                 *i++
+000013C0  BCB9 0000288C            316      CMP.L VAR_I, D6
+000013C6  66EC                     317      BNE FOR_I_CPY                   *si i != de la dimension on recommence
+000013C8                           318      
+000013C8  2279 0000289C            319      MOVE.L SAVE_ADRESSE, A1
+000013CE  2479 000028A0            320      MOVE.L SAVE_ADRESSE2, A2 
+000013D4  4E75                     321      RTS
+000013D6                           322  
+000013D6                           323  UPDATE:
+000013D6  23C9 0000289C            324      MOVE.L A1, SAVE_ADRESSE
+000013DC  23CA 000028A0            325      MOVE.L A2, SAVE_ADRESSE2
+000013E2  D5C6                     326      ADD.L D6, A2                    *A2 saute la première ligne (bord haut) de t2
+000013E4  23FC 00000001 0000288C   327      MOVE.L #1, VAR_I                *i = 1 : on commence après le bord haut
+000013EE                           328  
+000013EE                           329  LOOP_I_UPDATE:
+000013EE  528A                     330      ADD.L #1, A2                    *A2 saute le 0 de bord gauche
+000013F0  5387                     331      SUB.L #1, D7                    *D7 - 1 temporairement pour...
+000013F2  BEB9 0000288C            332      CMP.L VAR_I, D7                 *...tester si i atteint la dernière ligne (hors bord)
+000013F8  6700 00FA                333      BEQ END_LOOP_I_UPDATE
+000013FC  5287                     334      ADD.L #1, D7                    *Sinon on remet à la valeur initiale
+000013FE  23FC 00000001 00002890   335      MOVE.L #1, VAR_J                *j = 1 : on commence après le bord gauche
+00001408                           336      
+00001408                           337  LOOP_J_UPDATE:
+00001408  5386                     338      SUB.L #1, D6                    *D6 - 1 temporairement pour...
+0000140A  BCB9 00002890            339      CMP.L VAR_J, D6                 *...tester si j atteint la dernière colonne (hors bord)
+00001410  6700 00D2                340      BEQ END_LOOP_J_UPDATE
+00001414  5286                     341      ADD.L #1, D6                    *Sinon on remet à la valeur initiale
+00001416  13FC 0000 000028AD       342      MOVE.B #0, VAR_SUM              *Compteur de cellules vivantes voisines
+0000141E  23FC 00000000 00002894   343      MOVE.L #0, VAR_K                
+00001428                           344      
+00001428                           345  LOOP_K_UPDATE:
+00001428  0CB9 00000003 00002894   346      CMP.L #3, VAR_K                 *Boucle sur les 3 lignes du voisinage 3x3
+00001432  6700 003A                347      BEQ END_LOOP_K_UPDATE
+00001436  23FC 00000000 00002898   348      MOVE.L #0, VAR_L
+00001440                           349      
+00001440                           350  LOOP_L_UPDATE:
+00001440  0CB9 00000003 00002898   351      CMP.L #3, VAR_L                 *Boucle sur les 3 colonnes du voisinage 3x3
+0000144A  6700 0014                352      BEQ END_LOOP_L_UPDATE
+0000144E  1019                     353      MOVE.B (A1)+, D0                *D0 = valeur de la cellule (0 ou 1), A1++
+00001450  D139 000028AD            354      ADD.B D0, VAR_SUM               *On ajoute cette valeur au compteur
+00001456  52B9 00002898            355      ADD.L #1, VAR_L
+0000145C  4EF8 1440                356      JMP LOOP_L_UPDATE
+00001460                           357  
+00001460                           358  END_LOOP_L_UPDATE:
+00001460  5789                     359      SUB.L #3, A1                    *On recule A1 de 3 positions
+00001462  D3C6                     360      ADD.L D6, A1                    *On passe à la ligne d'après
+00001464  52B9 00002894            361      ADD.L #1, VAR_K
+0000146A  4EF8 1428                362      JMP LOOP_K_UPDATE
+0000146E                           363      
+0000146E                           364  END_LOOP_K_UPDATE:                  *Fin du parcours 3x3
+0000146E  93C6                     365      SUB.L D6, A1                    
+00001470  93C6                     366      SUB.L D6, A1                    *On remonte de 2 lignes
+00001472  5289                     367      ADD.L #1, A1                    *On avance d'une colonne : retour à la cellule centrale (hors première itération)
+00001474  13D1 000028AC            368      MOVE.B (A1), VAR_TMP
+0000147A  0C39 0001 000028AC       369      CMP.B #1, VAR_TMP               *On regarde si la cellule est vivante
+00001482  6600 0030                370      BNE NOT_LIVING_UPDATE
+00001486                           371      
+00001486                           372  LIVING_UPDATE:
+00001486  13FC 0001 000028AC       373      MOVE.B #1, VAR_TMP
+0000148E  0C39 0003 000028AD       374      CMP.B #3, VAR_SUM               *Si la cellule est vivante et qu'il y en a 2 vivantes autour ou...
+00001496  6700 0038                375      BEQ END_IF_LOOP_J_UPDATE
+0000149A  0C39 0004 000028AD       376      CMP.B #4, VAR_SUM               *...3 vivantes autour alors...
+000014A2  6700 002C                377      BEQ END_IF_LOOP_J_UPDATE        *...elle survit
+000014A6  13FC 0000 000028AC       378      MOVE.B #0, VAR_TMP              *Sinon elle meurt
+000014AE  4EF9 000014D0            379      JMP END_IF_LOOP_J_UPDATE
+000014B4                           380  
+000014B4                           381  NOT_LIVING_UPDATE:
+000014B4  13FC 0001 000028AC       382      MOVE.B #1, VAR_TMP
+000014BC  0C39 0003 000028AD       383      CMP.B #3, VAR_SUM               *Si la cellule est morte et a 3 cellules vivantes autour alors...
+000014C4  6700 000A                384      BEQ END_IF_LOOP_J_UPDATE        *...elle naît
+000014C8  13FC 0000 000028AC       385      MOVE.B #0, VAR_TMP              *Sinon elle reste morte
+000014D0                           386  
+000014D0                           387  END_IF_LOOP_J_UPDATE:
+000014D0  14B9 000028AC            388      MOVE.B VAR_TMP, (A2)            *On écrit le nouvel état dans t2
+000014D6  93C6                     389      SUB.L D6, A1                    *On se positionne en haut à gauche de la prochaine grille 3x3
+000014D8  528A                     390      ADD.L #1, A2                    *A2 avance à la cellule suivante dans t2
+000014DA  52B9 00002890            391      ADD.L #1, VAR_J
+000014E0  4EF8 1408                392      JMP LOOP_J_UPDATE
+000014E4                           393      
+000014E4                           394  END_LOOP_J_UPDATE:
+000014E4  5286                     395      ADD.L #1, D6                    *On restaure D6 (SUB avant comparaison)
+000014E6  5489                     396      ADD.L #2, A1                    *A1 avance de 2 (on saute de ligne en ignorant bord droit puis gauche)
+000014E8  528A                     397      ADD.L #1, A2                    *A2 avance de 1 (sauter le bord droit)
+000014EA  52B9 0000288C            398      ADD.L #1, VAR_I
+000014F0  4EF8 13EE                399      JMP LOOP_I_UPDATE
+000014F4                           400      
+000014F4                           401  END_LOOP_I_UPDATE:
+000014F4  5287                     402      ADD.L   #1, D7                  *On restaure D7 (SUB avant comparaison)
+000014F6  2479 0000289C            403      MOVE.L  SAVE_ADRESSE, A2
+000014FC  2279 000028A0            404      MOVE.L  SAVE_ADRESSE2, A1
+00001502  4E75                     405      RTS
+00001504                           406  
+00001504                           407  
+00001504                           408  NB_TO_STRING:
+00001504  5E89                     409      ADD.L  #7, A1               *On décale A1 de 7 pour qu'il pointe sur le dernier octet du buffer
+00001506  2449                     410      MOVE.L A1, A2               *On le copie dans A2
+00001508  14BC 0000                411      MOVE.B #0, (A2)             *On met le caractère de fin de chaîne au dernier octet
+0000150C                           412      
+0000150C  B0BC 00000000            413      CMP.L  #0, D0               *Si D0 = 0 alors...
+00001512  6600 000A                414      BNE    LOOP_NB_TO_STRING
+00001516  153C 0030                415      MOVE.B #'0', -(A2)          *...On déplace l'adresse d'A2 à gauche et on lui met le caractère 0
+0000151A  224A                     416      MOVE.L A2, A1               *A1 prend A2 et c'est fini si le nb est = à 0
+0000151C  4E75                     417      RTS
+0000151E                           418  
+0000151E                           419  LOOP_NB_TO_STRING:
+0000151E  80FC 000A                420      DIVU   #10, D0              *Sinon, on divise le nb par 10 (16 bits forts = reste, 16 bits faibles = quotient)
+00001522  3600                     421      MOVE.W D0, D3               *On copie le quotient dans D3 (donc ce qu'on aura à rediviser)
+00001524  4840                     422      SWAP   D0                   *On inverse les 16 bits
+00001526  0600 0030                423      ADD.B  #'0', D0             *On transforme le nb en ASCII en lui rajoutant la valeur du caractere de fin de chaine (48)
+0000152A  1500                     424      MOVE.B D0, -(A2)            *On recule A2 d'un octet et on écrit le caractère
+0000152C  3003                     425      MOVE.W D3, D0               *On remet D0 = quotient
+0000152E  C0BC 0000FFFF            426      AND.L  #$0000FFFF, D0       *On nettoie les 16 bits forts
+00001534                           427  
+00001534  B07C 0000                428      CMP.W  #0, D0               *Tant que le quotient n'est pas 0
+00001538  66E4                     429      BNE    LOOP_NB_TO_STRING    *On continue
+0000153A                           430      
+0000153A  224A                     431      MOVE.L A2, A1               *On met le mot dans A1
+0000153C  4E75                     432      RTS
+0000153E                           433  
+0000153E                           434  
+0000153E                           435  
+0000153E                           436  COUNT_POP:
+0000153E  23C9 0000289C            437      MOVE.L A1, SAVE_ADRESSE
+00001544  23C6 000028A4            438      MOVE.L D6, SAVE_D6
+0000154A  23C7 000028A8            439      MOVE.L D7, SAVE_D7
+00001550                           440  
+00001550  4280                     441      CLR.L  D0              * compteur pop = 0
+00001552  42B9 0000288C            442      CLR.L  VAR_I           * i = 0
+00001558                           443  
+00001558  D3C6                     444      ADD.L  D6, A1          * saute la ligne du bord haut
+0000155A  5289                     445      ADD.L  #1, A1          * saute le bord gauche
+0000155C  5586                     446      SUB.L  #2, D6          * largeur intérieure
+0000155E  5587                     447      SUB.L  #2, D7          * hauteur intérieure
+00001560                           448  
+00001560                           449  LOOP_I_POP:
+00001560  BEB9 0000288C            450      CMP.L  VAR_I, D7
+00001566  6700 0034                451      BEQ    END_POP
+0000156A  42B9 00002890            452      CLR.L  VAR_J           * j = 0
+00001570                           453  
+00001570                           454  LOOP_J_POP:
+00001570  BCB9 00002890            455      CMP.L  VAR_J, D6
+00001576  6700 0018                456      BEQ    END_ROW_POP
+0000157A                           457  
+0000157A  4281                     458      CLR.L  D1
+0000157C  1219                     459      MOVE.B (A1)+, D1
+0000157E  C2BC 00000001            460      AND.L  #1, D1
+00001584  D081                     461      ADD.L  D1, D0
+00001586                           462  
+00001586  52B9 00002890            463      ADD.L  #1, VAR_J
+0000158C  4EF8 1570                464      JMP    LOOP_J_POP
+00001590                           465  
+00001590                           466  END_ROW_POP:
+00001590  52B9 0000288C            467      ADD.L  #1, VAR_I
+00001596  5489                     468      ADD.L  #2, A1          * saute bord droit + bord gauche ligne suivante
+00001598  4EF8 1560                469      JMP    LOOP_I_POP
+0000159C                           470  
+0000159C                           471  END_POP:
+0000159C  2279 0000289C            472      MOVE.L SAVE_ADRESSE, A1
+000015A2  2C39 000028A4            473      MOVE.L SAVE_D6, D6
+000015A8  2E39 000028A8            474      MOVE.L SAVE_D7, D7
+000015AE  4E75                     475      RTS
+000015B0                           476  
+000015B0                           477  
+000015B0                           478  
+000015B0                           479  
+000015B0                           480  
+000015B0                           481  
+000015B0                           482  -------------------- end include --------------------
+000015B0                           483      INCLUDE 'BIBPERIPH.X68'
+000015B0                           484  RESOLUTION:
+000015B0  303C 0021                485      MOVE #33, D0
+000015B4  4E4F                     486      TRAP #15
+000015B6  4E75                     487      RTS
+000015B8                           488  
+000015B8                           489  GET_MOUSE:
+000015B8  303C 003D                490      MOVE #61, D0
+000015BC  4E4F                     491      TRAP #15
+000015BE  4E75                     492      RTS
+000015C0                           493  
+000015C0                           494  
+000015C0                           495  IF_LEFT_CLICK:
+000015C0  7200                     496      MOVE.L #0, D1
+000015C2  4EB8 15B8                497      JSR GET_MOUSE                   *On prend les états de la souris
+000015C6  C03C 0001                498      AND.B #%00000001, D0            *On garde uniquement l'état du clic gauche
+000015CA  4E75                     499      RTS
+000015CC                           500  
+000015CC                           501  
+000015CC                           502  ON_ELEMENT:
+000015CC  2419                     503      MOVE.L (A1)+, D2        *D2 contient Y1 et X1 de l'élément
+000015CE  2611                     504      MOVE.L (A1), D3         *D3 contient Y2 et X2 de l'élément
+000015D0  5989                     505      SUB.L #4, A1            *On remet A1 à  sa position initiale
+000015D2  7000                     506      MOVE.L #0, D0           *Par défaut, la souris n'est pas dans l'élément
+000015D4                           507      
+000015D4  B441                     508      CMP.W D1, D2            *Compare X1 avec le X de la souris
+000015D6  6200 0022                509      BHI END_ON_ELEMENT       *Si X1 > X de la souris -> la souris est hors du bouton
+000015DA                           510      
+000015DA  B641                     511      CMP.W D1, D3            *Compare X2 avec le X de la souris
+000015DC  6500 001C                512      BCS END_ON_ELEMENT       *Si X2 < X de la souris -> la souris est hors du bouton
+000015E0                           513      
+000015E0                           514      *On Ã©change les 16 bits de D1, D2, D3, maintenant :
+000015E0  4841                     515      SWAP D1                 *D1 = Y de la souris
+000015E2  4842                     516      SWAP D2                 *D2 = Y1
+000015E4  4843                     517      SWAP D3                 *D3 = Y2
+000015E6                           518      
+000015E6  B441                     519      CMP.W D1, D2            *Compare Y1 avec le Y de la souris
+000015E8  6200 000A                520      BHI SWAP_BACK           *Si Y1 > Y de la souris -> la souris est hors du bouton
+000015EC                           521      
+000015EC  B641                     522      CMP.W D1, D3            *Compare Y2 avec le Y de la souris
+000015EE  6500 0004                523      BCS SWAP_BACK           *Si Y2 < Y de la souris -> la souris est hors du bouton
+000015F2                           524      
+000015F2  7001                     525      MOVE.L #1, D0           *Si on a passé tous ces test, çaa signifie que la souris est dans l'élément
+000015F4                           526      
+000015F4                           527  SWAP_BACK:
+000015F4                           528      *On remet D1, D2 et D3 à leurs états d'origine
+000015F4  4841                     529      SWAP D1
+000015F6  4842                     530      SWAP D2
+000015F8  4843                     531      SWAP D3
+000015FA                           532      
+000015FA                           533  END_ON_ELEMENT:
+000015FA  4E75                     534      RTS
+000015FC                           535      
+000015FC                           536      
+000015FC                           537  
+000015FC                           538  
+000015FC                           539  
+000015FC                           540  
+000015FC                           541  
+000015FC                           542  
+000015FC                           543  -------------------- end include --------------------
+000015FC                           544      INCLUDE 'BIBGRAPH.X68'
+000015FC                           545  
+000015FC                           546  SET_PEN_COLOR:
+000015FC  303C 0050                547      MOVE #80, D0
+00001600  4E4F                     548      TRAP #15
+00001602  4E75                     549      RTS
+00001604                           550  
+00001604                           551  
+00001604                           552  SET_FILL_COLOR:
+00001604  303C 0051                553      MOVE #81, D0
+00001608  4E4F                     554      TRAP #15
+0000160A  4E75                     555      RTS
+0000160C                           556  
+0000160C                           557  DRAW_FILL_RECT:
+0000160C  303C 0057                558      MOVE #87, D0
+00001610  4E4F                     559      TRAP #15
+00001612  4E75                     560      RTS
+00001614                           561  
+00001614                           562  DRAW_STRING:
+00001614  303C 005F                563      MOVE #95, D0
+00001618  4E4F                     564      TRAP #15
+0000161A  4E75                     565      RTS
+0000161C                           566  
+0000161C                           567   
+0000161C                           568  CLEAR_SCREEN:
+0000161C  323C FF00                569      MOVE.W  #$FF00, D1
+00001620  4EB8 12B0                570      JSR     POS_CURS
+00001624  4E75                     571      RTS
+00001626                           572      
+00001626                           573  
+00001626                           574  
+00001626                           575  DRAW_CELL:
+00001626  4EB8 15FC                576      JSR SET_PEN_COLOR
+0000162A  4EB8 1604                577      JSR SET_FILL_COLOR
+0000162E                           578      
+0000162E                           579      *Calcul des coordonées du coin supérieur gauche
+0000162E  2239 00002890            580      MOVE.L VAR_J, D1
+00001634  2439 0000288C            581      MOVE.L VAR_I, D2
+0000163A  C2C5                     582      MULU D5, D1             *D1 = j * taille_cellule = X1
+0000163C  C4C5                     583      MULU D5, D2             *D2 = i * taille_cellule= Y1
+0000163E                           584      
+0000163E                           585      *Calcul des coordonées du coin inférieur droit
+0000163E  2601                     586      MOVE.L D1, D3
+00001640  2802                     587      MOVE.L D2, D4
+00001642  D685                     588      ADD.L D5, D3            *D3 = X1 + taille_cellule= X2
+00001644  D885                     589      ADD.L D5, D4            *D4 = Y1 + taille_cellule= Y2
+00001646                           590      
+00001646                           591      * Appliquer les marges/décalages pour centrer ou positionner la grille
+00001646  D279 00002814            592      ADD.W   GAP_X, D1            * X1 += décalage horizontal
+0000164C  D479 00002816            593      ADD.W   GAP_Y, D2            * Y1 += décalage vertical
+00001652  D679 00002814            594      ADD.W   GAP_X, D3            * X2 += décalage horizontal
+00001658  D879 00002816            595      ADD.W   GAP_Y, D4            * Y2 += décalage vertical
+0000165E                           596      
+0000165E  4EB8 160C                597      JSR DRAW_FILL_RECT
+00001662  4E75                     598      RTS
+00001664                           599      
+00001664                           600  
+00001664                           601   
+00001664                           602  DRAW_GRID:
+00001664  23C9 0000289C            603      MOVE.L A1, SAVE_ADRESSE
+0000166A  7200                     604      MOVE.L #0, D1
+0000166C  23FC 00000000 0000288C   605      MOVE.L #0, VAR_I
+00001676  D3C6                     606      ADD.L D6, A1                *On saute la premiÃ¨re ligne de bord
+00001678  5289                     607      ADD.L #1, A1                *On saute le bord gauche de la ligne
+0000167A  5586                     608      SUB.L #2, D6                *On enleve les deux lignes de bord de la hauteur
+0000167C  5587                     609      SUB.L #2, D7                *On enleve les deux 0 de bord de la largeur
+0000167E                           610      
+0000167E                           611  LOOP_I_DRAW_GRID:
+0000167E  BEB9 0000288C            612      CMP.L VAR_I, D7
+00001684  6700 0042                613      BEQ END_LOOP_I_DRAW_GRID   *Si i = D7 alors on sort de la boucle
+00001688  23FC 00000000 00002890   614      MOVE.L #0, VAR_J
+00001692                           615      
+00001692                           616  LOOP_J_DRAW_GRID:
+00001692  BCB9 00002890            617      CMP.L VAR_J, D6
+00001698  6700 0022                618      BEQ END_LOOP_J_DRAW_GRID   *Si j = D6 alors on sort de la boucle
+0000169C  1019                     619      MOVE.B (A1)+, D0           *D0 contient l'Ã©tat de la cellule actuelle
+0000169E  223C 00FFFFFF            620      MOVE.L #$FFFFFF, D1        *D1 contient la couleur blanche
+000016A4  B03C 0000                621      CMP.B #0, D0               *Si cellule morte, blanc
+000016A8  6700 0004                622      BEQ SUITE_DRAW_GRID
+000016AC  7200                     623      MOVE.L #$000000, D1        *Si cellule vivante, noir
+000016AE                           624      
+000016AE                           625  SUITE_DRAW_GRID:
+000016AE  4EB8 1626                626      JSR DRAW_CELL              *On dessine la cellule
+000016B2  52B9 00002890            627      ADD.L #1, VAR_J
+000016B8  4EF8 1692                628      JMP LOOP_J_DRAW_GRID
+000016BC                           629      
+000016BC                           630  END_LOOP_J_DRAW_GRID:
+000016BC  52B9 0000288C            631      ADD.L #1, VAR_I
+000016C2  5489                     632      ADD.L #2, A1               *On passe les bords
+000016C4  4EF8 167E                633      JMP LOOP_I_DRAW_GRID
+000016C8                           634      
+000016C8                           635  END_LOOP_I_DRAW_GRID:
+000016C8  5486                     636      ADD.L #2, D6
+000016CA  5487                     637      ADD.L #2, D7
+000016CC  2279 0000289C            638      MOVE.L SAVE_ADRESSE, A1 *On restitue les valeurs
+000016D2  4E75                     639      RTS
+000016D4                           640  
+000016D4                           641  
+000016D4                           642  FILL_BACKGROUND:
+000016D4  4EB8 15FC                643      JSR SET_PEN_COLOR
+000016D8  4EB8 1604                644      JSR SET_FILL_COLOR
+000016DC                           645      
+000016DC  2039 0000280E            646      MOVE.L RESOL, D0
+000016E2  323C 0000                647      MOVE.W #0, D1               *D1 = X1 = 0 (D1.W = 0)
+000016E6  343C 0000                648      MOVE.W #0, D2               *D2 = Y1 = 0 (D2.W = 0)
+000016EA  3800                     649      MOVE.W  D0, D4              *D4 = Y2 = largeur (D0.W = largeur)
+000016EC  4840                     650      SWAP    D0                  *On inverse la largeur et la hauteur dans D0
+000016EE  3600                     651      MOVE.W  D0, D3              *D3 = X2 = hauteur (D0.W = hauteur)
+000016F0  4EB8 160C                652      JSR     DRAW_FILL_RECT
+000016F4  4E75                     653      RTS
+000016F6                           654      
+000016F6                           655  
+000016F6                           656  
+000016F6                           657  DRAW_BUTTON:
+000016F6  23C9 0000289C            658      MOVE.L A1, SAVE_ADRESSE
+000016FC  3419                     659      MOVE.W (A1)+, D2             *On met Y1 dans D1 puis on passe Ã  l'adresse suivante de A1
+000016FE  3219                     660      MOVE.W (A1)+, D1             *On met X1 dans D2 puis on passe Ã  l'adresse suivante de A1
+00001700  3819                     661      MOVE.W (A1)+, D4             *On met Y2 dans D3 puis on passe Ã  l'adresse suivante de A1
+00001702  3619                     662      MOVE.W (A1)+, D3             *On met X2 dans D4 puis on passe Ã  l'adresse suivante de A1
+00001704  4EB8 160C                663      JSR DRAW_FILL_RECT           *On dessine le rectangle
+00001708  D459                     664      ADD.W (A1)+, D2              *Centrage vertical (Y) du texte
+0000170A  D259                     665      ADD.W (A1)+, D1              *Centrage horizontal (X) du texte
+0000170C  4EB8 1614                666      JSR DRAW_STRING              *Dessine le texte
+00001710  2279 0000289C            667      MOVE.L SAVE_ADRESSE, A1
+00001716  4E75                     668      RTS
+00001718                           669      
+00001718                           670  
+00001718                           671  DRAW_GENERATION:
+00001718  223C 00262945            672      MOVE.L #$262945, D1         *Couleur du fond
+0000171E  4EB8 1604                673      JSR SET_FILL_COLOR
+00001722  4EB8 15FC                674      JSR SET_PEN_COLOR
+00001726                           675  
+00001726  323C 000F                676      MOVE.W #15,  D1
+0000172A  343C 007D                677      MOVE.W #125,  D2 
+0000172E  363C 00D2                678      MOVE.W #210, D3
+00001732  383C 00A5                679      MOVE.W #165, D4
+00001736  4EB8 160C                680      JSR DRAW_FILL_RECT          *Dessine le fond
+0000173A                           681  
+0000173A  223C 00FFFFFF            682      MOVE.L #$FFFFFF, D1
+00001740  4EB8 15FC                683      JSR SET_PEN_COLOR           *Couleur de l'écriture
+00001744                           684  
+00001744  323C 001E                685      MOVE.W #30, D1
+00001748  343C 0082                686      MOVE.W #130, D2
+0000174C  43F9 00002856            687      LEA STR_GEN, A1             *A1 pointe sur le premier caractère de GENERATION
+00001752  4EB8 1614                688      JSR DRAW_STRING             *Dessine le nombre
+00001756                           689  
+00001756  3039 00002854            690      MOVE.W GENERATION, D0       *On met la generation actuelle dans D0
+0000175C  C0BC 0000FFFF            691      AND.L  #$0000FFFF, D0       *On nettoie D0
+00001762  43F9 00002864            692      LEA BUF_NUM, A1             *On fait pointer A1 sur le buffer qui contiendra le string
+00001768  4EB8 1504                693      JSR NB_TO_STRING
+0000176C                           694  
+0000176C  323C 00A0                695      MOVE.W #160, D1
+00001770  343C 0082                696      MOVE.W #130, D2
+00001774  4EB8 1614                697      JSR DRAW_STRING             *On dessine le nombre
+00001778                           698  
+00001778  4E75                     699      RTS
+0000177A                           700  
+0000177A                           701  
+0000177A                           702  DRAW_POP:
+0000177A  223C 00262945            703      MOVE.L #$262945, D1         *Couleur du fond
+00001780  4EB8 1604                704      JSR SET_FILL_COLOR
+00001784  4EB8 15FC                705      JSR SET_PEN_COLOR
+00001788                           706  
+00001788  323C 000F                707      MOVE.W #15,  D1
+0000178C  343C 00A5                708      MOVE.W #165,  D2 
+00001790  363C 00D2                709      MOVE.W #210, D3
+00001794  383C 00CD                710      MOVE.W #205, D4
+00001798  4EB8 160C                711      JSR DRAW_FILL_RECT          *Dessine le fond
+0000179C                           712  
+0000179C  223C 00FFFFFF            713      MOVE.L #$FFFFFF, D1
+000017A2  4EB8 15FC                714      JSR SET_PEN_COLOR           *Couleur de l'écriture
+000017A6                           715  
+000017A6  323C 001E                716      MOVE.W #30, D1
+000017AA  343C 00AA                717      MOVE.W #170, D2
+000017AE  43F9 00002872            718      LEA STR_POP, A1             *A1 pointe sur le premier caractère de POPULATION
+000017B4  4EB8 1614                719      JSR DRAW_STRING             *Dessine le nombre
+000017B8                           720  
+000017B8  3039 00002870            721      MOVE.W POPULATION, D0       *On met la generation actuelle dans D0
+000017BE  C0BC 0000FFFF            722      AND.L  #$0000FFFF, D0       *On nettoie D0
+000017C4  43F9 00002880            723      LEA BUF_POP, A1             *On fait pointer A1 sur le buffer qui contiendra le string
+000017CA  4EB8 1504                724      JSR NB_TO_STRING
+000017CE                           725  
+000017CE  323C 00A0                726      MOVE.W #160, D1
+000017D2  343C 00AA                727      MOVE.W #170, D2
+000017D6  4EB8 1614                728      JSR DRAW_STRING             *On dessine le nombre
+000017DA                           729  
+000017DA  4E75                     730      RTS
+000017DC                           731      
+000017DC                           732  
+000017DC                           733  
+000017DC                           734  
+000017DC                           735  
+000017DC                           736  
+000017DC                           737  
+000017DC                           738  
+000017DC                           739  
+000017DC                           740  
+000017DC                           741  
+000017DC                           742  
+000017DC                           743  
+000017DC                           744  
+000017DC                           745  
+000017DC                           746  
+000017DC                           747  
+000017DC                           748  
+000017DC                           749  
+000017DC                           750  
+000017DC                           751  -------------------- end include --------------------
+000017DC                           752      
+00002000                           753      ORG $2000
+00002000                           754      
+00002000                           755  TABLEAU1: DS.B 32*32
+00002400                           756  TABLEAU2: DS.B 32*32
+00002800= 00000000                 757  PTAB1: DC.L 0
+00002804= 00000000                 758  PTAB2: DC.L 0
+00002808= 0400                     759  NB_CASES: DC.W 32*32
+0000280A= 0020                     760  NB_LIGNES: DC.W 32
+0000280C= 0020                     761  NB_COLONNES: DC.W 32
+0000280E                           762  
+0000280E= 02BC 01F4                763  RESOL: DC.W 700, 500
+00002812                           764  
+00002812= 000A                     765  SIZE_CELL: DC.W 10
+00002814= 012C                     766  GAP_X: DC.W 300 *Distance entre le bord gauche de l'écran et le bord gauche de la grille
+00002816= 007D                     767  GAP_Y: DC.W 125 *Distance entre le bord haut de l'écran et le bord haut de la grille
+00002818= 012C                     768  WIDTH_CALC: DC.W 300 *Largeur de la grille
+0000281A= 012C                     769  HEIGHT_CALC: DC.W 300 *Hauteur de la grille
+0000281C                           770  
+0000281C= 00                       771  RUN: DC.B 0
+0000281D                           772  
+0000281D= 00                       773  IN_PUSH: DC.B 0
+0000281E                           774  
+0000281E                           775  B_PLAY: 
+0000281E= 000F 000F 0041 00A5      776          DC.W 15, 15, 65, 165        *Y1, X1, Y2, X2
+00002826= 0012 0033                777          DC.W 18, 51                 *X, Y
+0000282A= 53 54 41 52 54 00        778          DC.B 'START',0
+00002830                           779          
+00002830                           780  B_STOP: 
+00002830= 000F 00B9 0041 014F      781          DC.W 15, 185, 65, 335       *Y1, X1, Y2, X2
+00002838= 0012 0039                782          DC.W 18, 57                 *X, Y
+0000283C= 53 54 4F 50 00 00        783          DC.B 'STOP',0,0
+00002842                           784          
+00002842                           785  B_CLEAR: 
+00002842= 000F 0163 0041 01F9      786          DC.W 15, 355, 65, 505       *Y1, X1, Y2, X2
+0000284A= 0012 0036                787          DC.W 18, 54                 *X, Y
+0000284E= 43 4C 45 41 52 00        788          DC.B 'CLEAR',0
+00002854                           789  
+00002854= 0000                     790  GENERATION: DC.W 0
+00002856= 47 45 4E 45 52 41 ...    791  STR_GEN: DC.B 'GENERATION : ',0
+00002864                           792  BUF_NUM: DS.B 12
+00002870                           793  
+00002870= 0000                     794  POPULATION: DC.W 0
+00002872= 50 4F 50 55 4C 41 ...    795  STR_POP: DC.B 'POPULATION : ',0
+00002880                           796  BUF_POP: DS.B 12
+0000288C                           797  *----------------------VARIABLES BIBLIOTHEQUES----------------------
+0000288C                           798  
+0000288C= 00000000                 799  VAR_I: DC.L 0
+00002890= 00000000                 800  VAR_J: DC.L 0
+00002894= 00000000                 801  VAR_K: DC.L 0
+00002898= 00000000                 802  VAR_L: DC.L 0
+0000289C                           803  
+0000289C= 00000000                 804  SAVE_ADRESSE: DC.L 0
+000028A0= 00000000                 805  SAVE_ADRESSE2: DC.L 0
+000028A4= 00000000                 806  SAVE_D6: DC.L 0
+000028A8= 00000000                 807  SAVE_D7: DC.L 0
+000028AC                           808  
+000028AC= 00                       809  VAR_TMP: DC.B 0
+000028AD= 00                       810  VAR_SUM: DC.B 0
+000028AE                           811  
+000028AE                           812      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+AFFCAR              12A0
+BOUCLE_START        10B6
+BUF_NUM             2864
+BUF_POP             2880
+B_CLEAR             2842
+B_PLAY              281E
+B_STOP              2830
+CHARIOT             12BE
+CLEAR_ACTION        116C
+CLEAR_SCREEN        161C
+CLICK_IN_GRID       11C8
+COPY_GRID           139E
+COUNT_POP           153E
+DRAW_BUTTON         16F6
+DRAW_CELL           1626
+DRAW_FILL_RECT      160C
+DRAW_GENERATION     1718
+DRAW_GRID           1664
+DRAW_POP            177A
+DRAW_STRING         1614
+END_IF_LOOP_J_UPDATE  14D0
+END_LOOP_I          1320
+END_LOOP_I_DRAW_GRID  16C8
+END_LOOP_I_PRINT    1396
+END_LOOP_I_UPDATE   14F4
+END_LOOP_J          1316
+END_LOOP_J_DRAW_GRID  16BC
+END_LOOP_J_PRINT    1388
+END_LOOP_J_UPDATE   14E4
+END_LOOP_K_UPDATE   146E
+END_LOOP_L_UPDATE   1460
+END_ON_ELEMENT      15FA
+END_POP             159C
+END_ROW_POP         1590
+FILL_BACKGROUND     16D4
+FINPRG              12B8
+FIN_BOUCLE          129A
+FOR_I_CPY           13B4
+GAP_X               2814
+GAP_Y               2816
+GENERATION          2854
+GET_MOUSE           15B8
+HEIGHT_CALC         281A
+IF_EQUAL_PRINT      1378
+IF_LEFT_CLICK       15C0
+IF_LEFT_CLICK_IN_GRID  1112
+IN_PUSH             281D
+IN_PUSH_START       1226
+IN_PUSH_STOP        1234
+LEFT_CLICK          10C4
+LEFT_CLICK_IN_GRID  11B2
+LIVING_UPDATE       1486
+LOOP_I              12EA
+LOOP_I_DRAW_GRID    167E
+LOOP_I_POP          1560
+LOOP_I_PRINT        1344
+LOOP_I_UPDATE       13EE
+LOOP_J              12FE
+LOOP_J_DRAW_GRID    1692
+LOOP_J_POP          1570
+LOOP_J_PRINT        1358
+LOOP_J_UPDATE       1408
+LOOP_K_UPDATE       1428
+LOOP_L_UPDATE       1440
+LOOP_NB_TO_STRING   151E
+NB_CASES            2808
+NB_COLONNES         280C
+NB_LIGNES           280A
+NB_TO_STRING        1504
+NOT_LIVING_UPDATE   14B4
+ON_ELEMENT          15CC
+POPULATION          2870
+POS_CURS            12B0
+PRINT_GRID          1328
+PTAB1               2800
+PTAB2               2804
+RESOL               280E
+RESOLUTION          15B0
+RUN                 281C
+SAISCAR             12A8
+SAVE_ADRESSE        289C
+SAVE_ADRESSE2       28A0
+SAVE_D6             28A4
+SAVE_D7             28A8
+SET_FILL_COLOR      1604
+SET_PEN_COLOR       15FC
+SIZE_CELL           2812
+START               1000
+START_ACTION        1150
+STOP_ACTION         115E
+STR_GEN             2856
+STR_POP             2872
+SUITE_BOUCLE        1242
+SUITE_DRAW_GRID     16AE
+SUITE_PRINT         137A
+SWAP_BACK           15F4
+TABLEAU1            2000
+TABLEAU2            2400
+TEST_LEFT_CLICK     10B6
+UPDATE              13D6
+VAR_I               288C
+VAR_J               2890
+VAR_K               2894
+VAR_L               2898
+VAR_SUM             28AD
+VAR_TMP             28AC
+VIDER               12D0
+WIDTH_CALC          2818

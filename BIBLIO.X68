@@ -1,5 +1,6 @@
 *------------------------------------------------*
 * Affiche le caractère stocké dans D1
+
 AFFCAR:
     MOVE #6, D0
     TRAP #15
@@ -8,6 +9,7 @@ AFFCAR:
 
 *------------------------------------------------*
 * Stock un caractère saisie dans D1
+
 SAISCAR:
     MOVE #5, D0
     TRAP #15
@@ -16,6 +18,7 @@ SAISCAR:
 
 *------------------------------------------------*
 *Positionne le curseur/efface l'écran   
+
 POS_CURS:
     MOVE #11, D0
     TRAP #15
@@ -24,29 +27,15 @@ POS_CURS:
 
 *------------------------------------------------*
 *Arrête le programme
+
 FINPRG:
     MOVE #9, D0
     TRAP #15
 *------------------------------------------------*
 
 *------------------------------------------------*
-* Affiche le quartet de poids faible de la valeur stockée dans D1
-AFFQUARTET:
-    AND.L #$0000000F, D1
-    CMP #$9, D1
-    BGT ADD55
-    ADD #$30, D1
-    JMP ENDQUARTET
-ADD55:
-    ADD #55, D1
-    
-ENDQUARTET:
-    JSR AFFCAR
-    RTS
-*------------------------------------------------*
-
-*------------------------------------------------*
 *Effectue un retour à la ligne
+
 CHARIOT:
     MOVE.B  #$0A, D1                *\r
     JSR AFFCAR
@@ -54,42 +43,6 @@ CHARIOT:
     JSR AFFCAR
     RTS 
 *------------------------------------------------*
-
-*------------------------------------------------*
-* Affiche la valeur stockée dans D1 en hexadecimale
-AFFHEXA:
-    MOVE.B #8, D3        
-BOUCLE:
-    ROL.L #4, D1
-    MOVE.L D1, D2
-    AND.L #$0F, D1
-    JSR AFFQUARTET
-    MOVE.L D2, D1
-    SUB.B #1, D3
-    CMP #0, D3
-    BNE BOUCLE
-    
-    RTS
-*------------------------------------------------*
-
-*------------------------------------------------*
-* Affiche la valeur stockée dans D1 en binaire*
-AFFBIN:
-    MOVE.B #32, D3
-    
-BOUCLEBINAIRE:
-    ROL.L #1, D1
-    MOVE.L D1, D2
-    AND.L #01, D1
-    ADD #$30, D1
-    JSR AFFCAR
-    SUB.B #1, D3
-    MOVE.L D2, D1
-    CMP #0, D3
-    BNE BOUCLEBINAIRE
-
-    JMP FINPRG
-*------------------------------------------------*   
 
 *------------------------------------------------*
 *Remplis la matrice de 0
@@ -186,7 +139,8 @@ FOR_I_CPY:
 *------------------------------------------------*
 
 *------------------------------------------------*
-
+*Applique les règles du jeu de la vie à chaque cellule
+*Arguments : A1 et A2 (adresses des tableaux), D6 et D7 (dimensions)
 *NOTES: Pour la première itération de recherche en 3x3, la cellule est deja en haut gauche
 UPDATE:
     MOVE.L A1, SAVE_ADRESSE
@@ -274,6 +228,8 @@ END_LOOP_I_UPDATE:
 
 *------------------------------------------------*
 *Transforme un nombre en chaîne de caractères
+*Arguments : D0 (nombre à convertir)
+
 NB_TO_STRING:
     ADD.L  #7, A1               *On décale A1 de 7 pour qu'il pointe sur le dernier octet du buffer
     MOVE.L A1, A2               *On le copie dans A2
@@ -301,6 +257,11 @@ LOOP_NB_TO_STRING:
     RTS
 
 *------------------------------------------------*
+
+*------------------------------------------------*
+*Compte le nombre de cellules vivantes dans la grille
+*Arguments : A1 (adresse du tableau), D6 et D7 (Dimensions du tableau)
+
 COUNT_POP:
     MOVE.L A1, SAVE_ADRESSE
     MOVE.L D6, SAVE_D6
@@ -342,6 +303,8 @@ END_POP:
     MOVE.L SAVE_D7, D7
     RTS
 *------------------------------------------------*
+
+
 
 
 

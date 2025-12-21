@@ -1,5 +1,5 @@
 *------------------------------------------------*
-*RÃ©cupÃ¨re la rÃ©solution de la fenÃªtre d'affichage
+*Récupère la résolution de la fenêtre d'affichage
 RESOLUTION:
     MOVE #33, D0
     TRAP #15
@@ -7,7 +7,7 @@ RESOLUTION:
 *------------------------------------------------*
 
 *------------------------------------------------*
-*Permet de rÃ©cupÃ©rer les informations sur la souris (2 derniers bits = droite, gauche)
+*Permet de récupérer les informations sur la souris (2 derniers bits = droite, gauche)
 GET_MOUSE:
     MOVE #61, D0
     TRAP #15
@@ -15,25 +15,25 @@ GET_MOUSE:
 *------------------------------------------------*
 
 *------------------------------------------------*
-*VÃ©rifie si l'utilisateur fait un clic gauche
-*Arguments : D0 (Ã©tats de la souris)
+*Vérifie si l'utilisateur fait un clic gauche
+*Arguments : D0 (états de la souris)
 
 IF_LEFT_CLICK:
     MOVE.L #0, D1
-    JSR GET_MOUSE                   *On prend les Ã©tats de la souris
-    AND.B #%00000001, D0            *On garde uniquement l'Ã©tat du clic gauche
+    JSR GET_MOUSE                   *On prend les états de la souris
+    AND.B #%00000001, D0            *On garde uniquement l'état du clic gauche
     RTS
 *------------------------------------------------*
 
 *------------------------------------------------*
-*VÃ©rifie si la souris est au dessus d'un Ã©lÃ©ment (boutons, grille)
-*Arguments : D1 (coordonÃ©es de la souris), D2, D3 (coordonÃ©es de l'Ã©lÃ©ment)
+*Vérifie si la souris est au dessus d'un élément (boutons, grille)
+*Arguments : D1 (coordonées de la souris), D2, D3 (coordonées de l'élément)
 
 ON_ELEMENT:
-    MOVE.L (A1)+, D2        *D2 contient Y1 et X1 de l'Ã©lÃ©ment
-    MOVE.L (A1), D3         *D3 contient Y2 et X2 de l'Ã©lÃ©ment
-    SUB.L #4, A1            *On remet A1 Ã  sa position initiale
-    MOVE.L #0, D0           *Par dÃ©faut, la souris n'est pas dans l'Ã©lÃ©ment
+    MOVE.L (A1)+, D2        *D2 contient Y1 et X1 de l'élément
+    MOVE.L (A1), D3         *D3 contient Y2 et X2 de l'élément
+    SUB.L #4, A1            *On remet A1 à  sa position initiale
+    MOVE.L #0, D0           *Par défaut, la souris n'est pas dans l'élément
     
     CMP.W D1, D2            *Compare X1 avec le X de la souris
     BHI END_ON_ELEMENT       *Si X1 > X de la souris -> la souris est hors du bouton
@@ -52,10 +52,10 @@ ON_ELEMENT:
     CMP.W D1, D3            *Compare Y2 avec le Y de la souris
     BCS SWAP_BACK           *Si Y2 < Y de la souris -> la souris est hors du bouton
     
-    MOVE.L #1, D0           *Si on a passÃ© tous ces test, Ã§a signifie que la souris est dans l'Ã©lÃ©ment
+    MOVE.L #1, D0           *Si on a passé tous ces test, çaa signifie que la souris est dans l'élément
     
 SWAP_BACK:
-    *On remet D1, D2 et D3 Ã  leurs Ã©tats d'origine
+    *On remet D1, D2 et D3 à leurs états d'origine
     SWAP D1
     SWAP D2
     SWAP D3
@@ -69,6 +69,7 @@ END_ON_ELEMENT:
 
 
 *~Font name~Courier New~
+
 
 
 *~Font name~Courier New~

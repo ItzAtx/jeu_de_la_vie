@@ -45,7 +45,7 @@ START:                  ; first instruction of program
     MOVE.L PTAB1, A1
     JSR DRAW_GRID
     
-
+    *Affichage des labels à 0
     JSR DRAW_GENERATION
     MOVE.L PTAB1, A1
     JSR COUNT_POP
@@ -54,15 +54,16 @@ START:                  ; first instruction of program
 *------- BOUCLE PRINCIPALE -------*
 BOUCLE_START:    
     
-    
+*Test si l'utilisateur à cliqué    
 TEST_LEFT_CLICK:
     JSR IF_LEFT_CLICK
     CMP.B #1, D0
     BNE IN_PUSH_STOP
-    
+
+*Tests des coordonnées sur lesquelles l'utilisateur a pu cliquer
 LEFT_CLICK:
-    CMP.B #1, IN_PUSH
-    BEQ IF_LEFT_CLICK_IN_GRID
+    CMP.B #1, IN_PUSH *Si le clic est maintenu, on test les coordonées de la grille directement
+    BEQ  IF_LEFT_CLICK_IN_GRID
     
     *BOUTON START
     MOVE.L #B_PLAY, A1
@@ -83,16 +84,19 @@ LEFT_CLICK:
     BEQ CLEAR_ACTION
     
     JMP IN_PUSH_START
-    
+
+*Si l'utilisateur a cliqué sur la grille    
 IF_LEFT_CLICK_IN_GRID:
-    MOVE.L D1, D2
-    CMP.W GAP_X, D2
-    BCS IN_PUSH_START
-    SUB.W GAP_X, D2
-    CMP.W WIDTH_CALC, D2
+    MOVE.L D1, D2 *D1 contiens les coordonées de la souris (Y 16 bits | X 16 bits)
+    
+    CMP.W GAP_X, D2 *Compare X avec la marge gauche
+    BCS IN_PUSH_START *Si X < marge gauche, on sort
+    SUB.W GAP_X, D2 *D2 = X - marge gauche (distance entre X et la marge gauche)
+    CMP.W WIDTH_CALC, D2 *Compare X-marge gauche <= WIDTH_CALC
     BCC IN_PUSH_START
     
-    SWAP D2
+    SWAP D2 *Swap des coordonées de la souris -> Y dans les 16 bits faibles
+    
     CMP.W GAP_Y, D2
     BCS IN_PUSH_START
     SUB.W GAP_Y, D2
@@ -124,33 +128,45 @@ CLEAR_ACTION:
     JMP IN_PUSH_START
     
 LEFT_CLICK_IN_GRID:
-    CMP.B #1, RUN
+    CMP.B #1, RUN *Si le jeu est en route, on ne fait rien
     BEQ IN_PUSH_START
     MOVE.B #1, D2
     JMP CLICK_IN_GRID
     
 CLICK_IN_GRID:
-    MOVE.W D1, D0
-    MOVE.W #0, D1
-    SWAP D1
-    SUB.W GAP_X, D0
-    SUB.W GAP_Y, D1
-    ADD.L D5, D0
+    MOVE.W D1, D0 *Copie les 16 bits faibles (X) dans D0
+    MOVE.W #0, D1 
+    SWAP D1 *Swap pour avoir Y dans les 16 bits faibles de D1
+    
+    SUB.W GAP_X, D0 *Xr = X - 300
+    SUB.W GAP_Y, D1 *Yr = Y - 125
+    
+    ADD.L D5, D0 *D5 contiens la taille d'une cellule (10)
     ADD.L D5, D1
-    DIVU D5, D0
-    DIVU D5, D1
-    MULU NB_LIGNES, D1
+    DIVU D5, D0 *Colonne = (Xr + 10) / 10
+    DIVU D5, D1 *Ligne = (Yr + 10) / 10
+    
+    MULU NB_LIGNES, D1 *D1 = Ligne * 32
+    
+    *Les adresses pointent sur les tableaux
     MOVE.L PTAB1, A1
     MOVE.L PTAB2, A2
+    
+    *Nettoyage des 16 bits forts
     AND.L #$0000FFFF, D0
     AND.L #$0000FFFF, D1
-    ADD.L D0, A1
-    ADD.L D1, A1
-    CMP.B (A1), D2
-    BEQ IN_PUSH_START
-    MOVE.B D2, (A1)
+    
+    ADD.L D0, A1 *A1 += colonne
+    ADD.L D1, A1 *A2 += (ligne * 32)
+    
+    CMP.B (A1), D2 *Compare l'état actuelle de la cellule
+    BEQ IN_PUSH_START *Si cellule déjà vivante, on passe
+    MOVE.B D2, (A1) *Sinon on la met vivante
+    
+    *On remet les pointeurs au début
     MOVE.L PTAB1, A1
     MOVE.L PTAB2, A2
+    
     JSR DRAW_GRID
     JMP IN_PUSH_START
 
@@ -208,10 +224,10 @@ NB_COLONNES: DC.W 32
 RESOL: DC.W 700, 500
 
 SIZE_CELL: DC.W 10
-GAP_X: DC.W 200
-GAP_Y: DC.W 150
-WIDTH_CALC: DC.W 300
-HEIGHT_CALC: DC.W 300
+GAP_X: DC.W 300 *Distance entre le bord gauche de l'écran et le bord gauche de la grille
+GAP_Y: DC.W 125 *Distance entre le bord haut de l'écran et le bord haut de la grille
+WIDTH_CALC: DC.W 300 *Largeur de la grille
+HEIGHT_CALC: DC.W 300 *Hauteur de la grille
 
 RUN: DC.B 0
 
@@ -255,8 +271,9 @@ VAR_TMP: DC.B 0
 VAR_SUM: DC.B 0
 
     END    START        ; last line of source
-*~Font name~Courier New~
-*~Font size~10~
+
+
+
 
 
 
