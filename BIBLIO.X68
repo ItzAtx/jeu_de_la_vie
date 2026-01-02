@@ -45,6 +45,98 @@ CHARIOT:
 *------------------------------------------------*
 
 *------------------------------------------------*
+*Extrait le nombre de seconde depuis minuit dans D1.L
+GET_TIME:
+    MOVE.L #8, D0
+    TRAP #15
+    RTS
+    
+*------------------------------------------------*
+
+*------------------------------------------------*
+*En utilisant le nombre de seconde passé depuis minuit en temps que graine
+*Génère un nombre aléatoire entre 0 et D2. La valeur de retour sera contenue dans D1
+*Argument : D2 (valeur max pouvant être généré)
+
+RANDOM_NUMBER:
+    JSR GET_TIME
+    AND.L #$0000FFFF, D1 *On réduit volontairement la taille de D1 pour éviter l'overflow sur la division
+
+    *On va simuler un mélange des valeurs pour éviter que deux valeurs aléatoire qui se suivent se ressemblent
+    MOVE.L D1, D0
+    LSL.L #3, D1 *décalage vers la gauche de 3 (multiplication par 8).
+    EOR.L D0, D1
+    ADD.L #12345, D1 *Ajout d'une constante pour renforcer l'aléatoire.
+
+    *Maintenant, il faut garder l'aléatoire entre 0 et D2, donc on effectue un modulo
+    *On ajoute 1 à notre max
+    DIVU D2, D1 *reste/quotient dans D1
+    SWAP    D1 *On swap notre reste dans les bits de poids faible, et on se débarrase des bits de poids fort              
+    AND.L #$0000FFFF, D1                  
+
+    RTS
+*------------------------------------------------*
+
+*------------------------------------------------*
+*Ajoute une cellule aléatoirement dans un tableau linéaire
+*Argument : A1 (adresse du tableau)
+
+ADD_RANDOM_CELL:
+    MOVE.L A1, SAVE_ADRESSE
+    MOVE.L A2, SAVE_ADRESSE2
+    *Calcul du nombre de case intérieur (hors les cases à 0 permanente)
+    MOVE.W NB_LIGNES, D0
+    SUB #2, D0
+    MOVE NB_COLONNES, D1
+    SUB #2, D1
+    MULU D1, D0 *D0 = Nombre de cases réelle dans le tableau
+    
+    *Génération du nombre aléatoire
+    MOVE D0, D2
+    SUB #1, D2
+    JSR RANDOM_NUMBER *D1 = aléatoire [0..D2]
+    
+    *On fait attention que notre valeur aléatoire ne soit pas dans les bords "fantôme"
+    *On cherche l'indice ligne et l'indice colonne par rapport au tableau sans bords "fantôme"
+    *indice ligne : index / (nb_colonnes-2)
+    *indice colonne : index % (nb_colonnes-2)
+    MOVE NB_COLONNES, D3
+    SUB #2, D3 *Colonne intérieur 
+    
+    DIVU D3, D1 *D1 = [reste|quotient]
+    
+    MOVE.W D1, D4 *D4 contiendra le quotient (Donc l'index ligne intérieur)
+    AND.W #$FFFF, D4
+    
+    SWAP D1 *On récupère le reste pour l'index colonne intérieur
+    AND #$FFFF, D1
+    
+    *On décale pour éviter les bords
+    ADD #1, D1 *ligne réelle
+    ADD #1, D4 *colonne réelle
+    
+    *Calcul de l'index réel
+    MOVE NB_COLONNES, D3
+    MULU D3, D1 *ligne * NB_COLONNES pour se déplacer à la bonne ligne
+    ADD D4, D1 *+colonne pour se placer sur le bon élément
+    
+    MOVE.L SAVE_ADRESSE, A1
+    ADD.L D1, A1 *On se place là où la cellule doit se générer
+    CMP.B #1, (A1) *recrée un nombre aléatoire si notre valeur est sur une case déjà vivante
+    BEQ ADD_RANDOM_CELL_END
+    
+    MOVE.B #1, (A1)
+    MOVE.L SAVE_ADRESSE2, A0
+    ADD.L D1, A0
+    MOVE.B #1, (A0)
+    
+ADD_RANDOM_CELL_END: *Permet de terminer la 'fonction' plus tôt si besoin
+    MOVE.L SAVE_ADRESSE, A1
+    MOVE.L SAVE_ADRESSE2, A2
+    RTS
+*------------------------------------------------*
+
+*------------------------------------------------*
 *Remplis la matrice de 0
 *Arguments : A1 (adresse du tableau), D6 et D7 (dimensions)    
 
@@ -72,69 +164,6 @@ END_LOOP_J:                        *FIN LOOP_J
 END_LOOP_I:                        *FIN LOOP_I 
     
     MOVE.L  SAVE_ADRESSE, A1       *A1 reviens à son adresse initiale
-    RTS
-*------------------------------------------------*
-
-*------------------------------------------------*
-*Affiche un tableau 2D
-*Arguments : A1 (adresse du tableau), D6 et D7 (dimensions)
-*Utilisés : D1 (pour stocker l'ASCII de 0 ou 1 et utiliser AFFCAR)
-PRINT_GRID:
-    MOVE.L  A1, SAVE_ADRESSE        *sauvegarde de l'adresse au début
-    MOVE.L  #$0, D1                 *D1 = la couleur (0, 0, 0)
-    MOVE.L  #0, VAR_I               *i = 0
-    MOVE.L  #0, VAR_J               *j = 0
-    
-LOOP_I_PRINT:                       *DEBUT LOOP_I
-    CMP.L   VAR_I, D7               *si i = height
-    BEQ     END_LOOP_I_PRINT        *on sort de LOOP_I
-    MOVE.L  #0, VAR_J               *j = 0
-    
-LOOP_J_PRINT:                       *DEBUT LOOP_J
-    CMP.L   VAR_J, D6               *si j = width
-    BEQ     END_LOOP_J_PRINT        *sortir de LOOP_J
-    
-    MOVE.B  (A1), VAR_TMP          *VAR_TMP = la valeur dans l'adresse puis on incrémente l'adresse
-    ADD.L   #1, A1
-    MOVE.L  #48, D1                 *D1 = 0
-    CMP.B   #0, VAR_TMP             *si VAR_TMP = 0
-    BEQ     SUITE_PRINT
-IF_EQUAL_PRINT:                
-    MOVE.L  #49, D1                 *sinon, D1 = 1
-    
-SUITE_PRINT:
-    JSR     AFFCAR                  *afficher D1 (0 ou 1 selon la comparaison d'avant)
-    ADD.L   #1, VAR_J               *j++
-    JMP     LOOP_J_PRINT
-    
-END_LOOP_J_PRINT:
-    JSR     CHARIOT                 *retour à la ligne
-    ADD.L   #1, VAR_I               *i++
-    JMP     LOOP_I_PRINT
-
-END_LOOP_I_PRINT:
-    MOVE.L  SAVE_ADRESSE, A1       *A1 reviens à son adresse initiale
-    RTS
-*------------------------------------------------*
-
-*------------------------------------------------*
-*Copie le contenu d'un tableau dans un autre
-*Arguments : A1 et A2 (adresses des tableaux), D6 (taille de la mémoire utilisée par le tableau1)
-
-COPY_GRID:
-    MOVE.L #0, VAR_I                *i = 0
-    MOVE.L A1, SAVE_ADRESSE         *sauvegarde des adresses du début
-    MOVE.L A2, SAVE_ADRESSE2
-FOR_I_CPY:
-    MOVE.B (A1),(A2)               *contenu de A2 = contenu de A1
-    ADD.L #1, A1                    *on incrémente les adresses
-    ADD.L #1, A2
-    ADD.L #1, VAR_I                 *i++
-    CMP.L VAR_I, D6
-    BNE FOR_I_CPY                   *si i != de la dimension on recommence
-    
-    MOVE.L SAVE_ADRESSE, A1
-    MOVE.L SAVE_ADRESSE2, A2 
     RTS
 *------------------------------------------------*
 
@@ -237,7 +266,7 @@ NB_TO_STRING:
     
     CMP.L  #0, D0               *Si D0 = 0 alors...
     BNE    LOOP_NB_TO_STRING
-    MOVE.B #'0', -(A2)          *...On déplace l'adresse d'A2 à gauche et on lui met le caractère 0
+    MOVE.B #48, -(A2)           *...On déplace l'adresse d'A2 à gauche et on lui met le caractère 0
     MOVE.L A2, A1               *A1 prend A2 et c'est fini si le nb est = à 0
     RTS
 
@@ -245,7 +274,7 @@ LOOP_NB_TO_STRING:
     DIVU   #10, D0              *Sinon, on divise le nb par 10 (16 bits forts = reste, 16 bits faibles = quotient)
     MOVE.W D0, D3               *On copie le quotient dans D3 (donc ce qu'on aura à rediviser)
     SWAP   D0                   *On inverse les 16 bits
-    ADD.B  #'0', D0             *On transforme le nb en ASCII en lui rajoutant la valeur du caractere de fin de chaine (48)
+    ADD.B  #48, D0              *On transforme le nb en ASCII en lui rajoutant la valeur du caractere de fin de chaine (48)
     MOVE.B D0, -(A2)            *On recule A2 d'un octet et on écrit le caractère
     MOVE.W D3, D0               *On remet D0 = quotient
     AND.L  #$0000FFFF, D0       *On nettoie les 16 bits forts
@@ -303,9 +332,6 @@ END_POP:
     MOVE.L SAVE_D7, D7
     RTS
 *------------------------------------------------*
-
-
-
 
 
 

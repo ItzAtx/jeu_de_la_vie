@@ -52,7 +52,7 @@ ON_ELEMENT:
     CMP.W D1, D3            *Compare Y2 avec le Y de la souris
     BCS SWAP_BACK           *Si Y2 < Y de la souris -> la souris est hors du bouton
     
-    MOVE.L #1, D0           *Si on a passé tous ces test, çaa signifie que la souris est dans l'élément
+    MOVE.L #1, D0           *Si on a passé tous ces test, ça signifie que la souris est dans l'élément
     
 SWAP_BACK:
     *On remet D1, D2 et D3 à leurs états d'origine
@@ -69,6 +69,9 @@ END_ON_ELEMENT:
 
 
 *~Font name~Courier New~
+
+
+
 
 
 

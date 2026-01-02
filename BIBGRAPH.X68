@@ -149,6 +149,7 @@ DRAW_BUTTON:
     MOVE.W (A1)+, D4             *On met Y2 dans D3 puis on passe Ã  l'adresse suivante de A1
     MOVE.W (A1)+, D3             *On met X2 dans D4 puis on passe Ã  l'adresse suivante de A1
     JSR DRAW_FILL_RECT           *On dessine le rectangle
+    
     ADD.W (A1)+, D2              *Centrage vertical (Y) du texte
     ADD.W (A1)+, D1              *Centrage horizontal (X) du texte
     JSR DRAW_STRING              *Dessine le texte
@@ -176,7 +177,7 @@ DRAW_GENERATION:
     MOVE.W #30, D1
     MOVE.W #130, D2
     LEA STR_GEN, A1             *A1 pointe sur le premier caractère de GENERATION
-    JSR DRAW_STRING             *Dessine le nombre
+    JSR DRAW_STRING             *Dessine le mot
 
     MOVE.W GENERATION, D0       *On met la generation actuelle dans D0
     AND.L  #$0000FFFF, D0       *On nettoie D0
@@ -210,7 +211,7 @@ DRAW_POP:
     MOVE.W #30, D1
     MOVE.W #170, D2
     LEA STR_POP, A1             *A1 pointe sur le premier caractère de POPULATION
-    JSR DRAW_STRING             *Dessine le nombre
+    JSR DRAW_STRING             *Dessine le mot
 
     MOVE.W POPULATION, D0       *On met la generation actuelle dans D0
     AND.L  #$0000FFFF, D0       *On nettoie D0
@@ -222,7 +223,14 @@ DRAW_POP:
     JSR DRAW_STRING             *On dessine le nombre
 
     RTS
-    
+
+*-----------------------------------------------------------------------*
+
+
+
+
+
+
 
 
 
